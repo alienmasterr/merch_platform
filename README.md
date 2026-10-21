@@ -1,1 +1,131 @@
-# merch_platform
+# Merch Platform
+
+Веб-платформа для створення та замовлення кастомного мерчу: користувач обирає базовий виріб, завантажує власний принт, позиціонує його в конструкторі, оформлює замовлення й оплачує його онлайн.
+
+Навчальний проєкт (Практична робота №1, об'єктно-орієнтований аналіз і дизайн). Мета: реалізувати в коді архітектуру з C4-діаграм із застосуванням принципів ООП, SOLID, патернів проєктування та unit-тестів.
+
+**Команда:** Харченко Аліна, Черненко Андрій, Семенюк Максим.
+
+## Архітектура
+
+Модульний моноліт на Node.js + SPA на React. Модулі спілкуються лише через інтерфейси з пакета `contracts`.
+
+| C4      | Що показує                                                                                            |
+| ------- | ----------------------------------------------------------------------------------------------------- |
+| Level 1 | Система, користувачі (Customer, Manager, Administrator), зовнішні сервіси (LiqPay, Нова Пошта, email) |
+| Level 2 | SPA (React), Backend API (Node.js), PostgreSQL, об'єктне сховище                                      |
+| Level 3 | Компоненти бекенду: Catalog, Customizer, Order, Payment, Notification                                 |
+| Level 4 | UML-діаграма класів                                                                                   |
+
+Діаграми лежать у `docs/diagrams/`.
+
+### Структура репозиторію
+
+```
+packages/contracts/     спільні інтерфейси, enum'и, помилки, shared-kernel (MerchApparelItem та нащадки)
+backend/src/
+  modules/
+    catalog/            каталог товарів, фільтрація
+    customizer/         конфігурації принтів, Builder, сховище файлів, прев'ю
+    delivery/           Нова Пошта (вартість, ТТН), Observer
+    order/ payment/ notification/
+  infra/                конфіг, БД і міграції, HTTP-утиліти, composition root (container.ts)
+  app.ts                збирає всі модулі; main.ts: точка входу
+frontend/               React SPA (Vite)
+docs/diagrams/          C4 та UML
+```
+
+Кожен модуль поділений на шари `domain` / `application` / `infrastructure`, тести лежать поруч у `__tests__/`.
+
+### Патерни та принципи
+
+| Патерн               | Де                                                                                                   |
+| -------------------- | ---------------------------------------------------------------------------------------------------- |
+| Builder              | `CustomMerchBuilder`                                                                                 |
+| Strategy             | `IPaymentStrategy` / `LiqPayPaymentStrategy`                                                         |
+| Observer             | `Order` → `IOrderObserver` (`EmailNotificationObserver`, `NovaPoshtaDeliveryObserver`)               |
+| Factory              | `createApparelItem`                                                                                  |
+| Repository           | `ICatalogRepository`, `ICustomMerchRepository`, `IOrderRepository` (Postgres і in-memory реалізації) |
+| Dependency Injection | конструкторна ін'єкція, конкретні класи створюються лише в `infra/config/container.ts`               |
+| Поліморфізм          | `MerchApparelItem` → `TopWearItem`, `BottomWearItem`, `AccessoryItem`                                |
+
+SOLID: кожен сервіс має одну відповідальність; нові типи одягу, сховища та способи оплати додаються новими класами; залежності спрямовані на абстракції (`contracts`).
+
+## Швидкий старт
+
+Потрібно: Node.js 22 (`.nvmrc`), npm, Docker.
+
+```bash
+git clone <url> && cd merch-platform
+npm install
+cp .env.example .env
+docker compose up -d postgres
+npm run migrate -w backend        # застосувати міграції
+npm run seed -w backend           # стартові дані каталогу
+npm run dev:backend               # http://localhost:3000/health
+npm run dev:frontend              # http://localhost:5173
+```
+
+> Порт БД у `docker-compose.yml` і в `DATABASE_URL` (`.env`) мають збігатися. Якщо 5432 зайнятий локальним Postgres, змініть обидва.
+
+### Режими роботи бекенду
+
+Налаштовуються через `.env` (див. `.env.example`):
+
+| Змінна                | Значення                                     | Опис                                                             |
+| --------------------- | -------------------------------------------- | ---------------------------------------------------------------- |
+| `PERSISTENCE`         | `memory` (за замовчуванням) / `postgres`     | `memory` не потребує БД, дані скидаються при перезапуску         |
+| `STORAGE_DRIVER`      | `local` (за замовчуванням) / `s3` / `memory` | `local` зберігає файли в `.data/uploads` і віддає їх на `/files` |
+| `NOVA_POSHTA_API_KEY` | ключ або порожньо                            | без ключа працює заглушка (доставка 70 грн, ТТН `DEV-…`)         |
+
+## Тестування
+
+```bash
+npm run typecheck                         # TypeScript
+npm run lint                              # ESLint
+npm test                                  # усі unit-тести
+npm run test:coverage -w backend          # покриття
+TEST_DATABASE_URL=postgres://merch:merch@localhost:5432/merch npm test -w backend   # + тести на справжній БД
+```
+
+Без `TEST_DATABASE_URL` тести на БД пропускаються. Вимоги до тестів: покриття доменної логіки від 80%, у кожного публічного методу є щонайменше happy path і один негативний сценарій, зовнішні залежності (БД, S3, HTTP) підміняються fake-реалізаціями. CI запускає лінтер, typecheck і тести на кожен PR.
+
+## REST API (реалізовано)
+
+| Метод       | Шлях                                   | Опис                                                                                         |
+| ----------- | -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| GET         | `/health`                              | перевірка стану                                                                              |
+| GET         | `/catalog`                             | список товарів; фільтри `categoryId`, `size`, `color`, `minPrice`, `maxPrice`, `inStockOnly` |
+| GET         | `/catalog/:id`                         | деталі товару                                                                                |
+| GET         | `/catalog/categories`                  | категорії                                                                                    |
+| POST        | `/customizer/uploads`                  | завантаження принта (multipart, поле `file`; png/jpg/webp/svg до 20 МБ)                      |
+| POST        | `/customizer/products`                 | створити кастомний виріб (повертає прев'ю та вартість)                                       |
+| GET         | `/customizer/products/:id`             | отримати кастомний виріб                                                                     |
+| GET         | `/delivery/shipping-cost`              | вартість доставки (`city`, `weightKg`)                                                       |
+| POST, PATCH | `/admin/catalog`, `/admin/catalog/:id` | керування каталогом (роль admin)                                                             |
+
+Помилки повертаються у форматі `{ "error": "CODE", "message": "..." }` (400, 403, 404, 409, 413, 502).
+
+> Авторизація поки тимчасова: роль береться із заголовка `x-user-role`. Перед використанням поза розробкою її потрібно замінити на справжню автентифікацію.
+
+## Розподіл роботи
+
+| Зона      | Відповідальність                                                          | Статус   |
+| --------- | ------------------------------------------------------------------------- | -------- |
+| Frontend  | React SPA: вітрина, конструктор, кошик, чекаут, панелі менеджера й адміна | в роботі |
+| Backend 1 | Catalog, Customizer, Delivery, інфраструктура, composition root           | виконано |
+| Backend 2 | Order, Payment (LiqPay), Notification                                     | в роботі |
+
+### Правила командної роботи
+
+1. Один модуль має одного власника; чужі папки не редагуємо.
+2. Модулі залежать лише від `packages/contracts`; зміни в ньому йдуть через PR із погодженням усіх трьох.
+3. Гілки: `feat/<модуль>-<задача>`; пряме злиття в `main` заборонене, потрібні зелений CI та мінімум один approval.
+4. Міграції БД: файли `001`–`009` належать Backend 1, `010` і далі Backend 2.
+5. Нові модулі підключаються в `backend/src/app.ts` (composition root); зміни там робить одна людина, решта рев'юють.
+
+## Відомі обмеження
+
+- Інтеграція з Новою Поштою перевірена тільки на mock-HTTP; перед використанням потрібен тестовий ключ.
+- Прев'ю макета це простий SVG-мокап, а не фотореалістичне зображення.
+- Номер ТТН зберігається в пам'яті спостерігача й губиться після перезапуску (його має зберігати модуль замовлень).

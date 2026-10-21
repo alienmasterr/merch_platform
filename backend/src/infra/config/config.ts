@@ -1,0 +1,55 @@
+import { join } from 'node:path';
+import { z } from 'zod';
+import { REPO_ROOT } from './load-env';
+
+const schema = z
+  .object({
+    PORT: z.coerce.number().int().positive().default(3000),
+    /** memory: без БД (для швидкої розробки), postgres: реальна БД. */
+    PERSISTENCE: z.enum(['memory', 'postgres']).default('memory'),
+    DATABASE_URL: z.string().optional(),
+
+    /** local: файли в .data/uploads, s3: S3-сумісне сховище, memory: лише для тестів. */
+    STORAGE_DRIVER: z.enum(['local', 's3', 'memory']).default('local'),
+    PUBLIC_BASE_URL: z.string().default('http://localhost:3000'),
+    UPLOADS_DIR: z.string().default(join(REPO_ROOT, '.data', 'uploads')),
+    CORS_ORIGIN: z.string().default('http://localhost:5173'),
+
+    S3_ENDPOINT: z.string().optional(),
+    S3_PUBLIC_URL: z.string().optional(),
+    S3_REGION: z.string().default('us-east-1'),
+    S3_BUCKET: z.string().default('merch-prints'),
+    S3_ACCESS_KEY: z.string().optional(),
+    S3_SECRET_KEY: z.string().optional(),
+
+    NOVA_POSHTA_API_KEY: z.string().optional(),
+    NP_SENDER_CITY: z.string().default('Київ'),
+    NP_SENDER_REF: z.string().optional(),
+    NP_CONTACT_SENDER_REF: z.string().optional(),
+    NP_SENDER_ADDRESS_REF: z.string().optional(),
+    NP_SENDER_PHONE: z.string().optional(),
+  })
+  .superRefine((cfg, ctx) => {
+    const need = (cond: boolean, path: string, message: string): void => {
+      if (!cond) ctx.addIssue({ code: 'custom', path: [path], message });
+    };
+    if (cfg.PERSISTENCE === 'postgres') need(!!cfg.DATABASE_URL, 'DATABASE_URL', 'required when PERSISTENCE=postgres');
+    if (cfg.STORAGE_DRIVER === 's3') {
+      need(!!cfg.S3_ENDPOINT, 'S3_ENDPOINT', 'required when STORAGE_DRIVER=s3');
+      need(!!cfg.S3_ACCESS_KEY, 'S3_ACCESS_KEY', 'required when STORAGE_DRIVER=s3');
+      need(!!cfg.S3_SECRET_KEY, 'S3_SECRET_KEY', 'required when STORAGE_DRIVER=s3');
+    }
+    if (cfg.NOVA_POSHTA_API_KEY) {
+      for (const key of ['NP_SENDER_REF', 'NP_CONTACT_SENDER_REF', 'NP_SENDER_ADDRESS_REF', 'NP_SENDER_PHONE'] as const) {
+        need(!!cfg[key], key, 'required when NOVA_POSHTA_API_KEY is set');
+      }
+    }
+  });
+
+export type AppConfig = z.infer<typeof schema>;
+
+export function loadConfig(env: Record<string, string | undefined> = process.env): AppConfig {
+  // порожні рядки з .env (наприклад NOVA_POSHTA_API_KEY=) вважаємо незаданими
+  const cleaned = Object.fromEntries(Object.entries(env).filter(([, v]) => v !== undefined && v !== ''));
+  return schema.parse(cleaned);
+}

@@ -5,7 +5,8 @@ services:
       POSTGRES_USER: merch
       POSTGRES_PASSWORD: merch
       POSTGRES_DB: merch
-    ports: ["5432:5432"]
+    ports: ["5433:5432"]
+    
     volumes: [pgdata:/var/lib/postgresql/data]
 
   minio:
