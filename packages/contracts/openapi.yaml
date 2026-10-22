@@ -1,0 +1,600 @@
+openapi: 3.1.0
+info:
+  title: Merch Platform API
+  version: 1.0.0
+  description: |
+    REST API бекенду Merch Platform. Джерело правди для фронтенду (типи через openapi-typescript, моки через MSW).
+    Помилки завжди у форматі `Error`. Авторизація тимчасова: роль у заголовку `x-user-role` (`admin` або `manager`).
+security: []
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Catalog
+  - name: Customizer
+  - name: Delivery
+  - name: Orders
+  - name: Payments
+  - name: Manager
+  - name: Admin
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Перевірка стану
+      responses:
+        '200':
+          description: Сервер працює
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: ok }
+
+  /catalog:
+    get:
+      tags: [Catalog]
+      operationId: listCatalog
+      summary: Список базових виробів з фільтрами
+      parameters:
+        - { name: categoryId, in: query, schema: { type: string } }
+        - { name: size, in: query, schema: { type: string }, description: Без урахування регістру }
+        - { name: color, in: query, schema: { type: string }, description: Без урахування регістру }
+        - { name: minPrice, in: query, schema: { type: number } }
+        - { name: maxPrice, in: query, schema: { type: number } }
+        - { name: inStockOnly, in: query, schema: { type: string, enum: ['true', 'false'] } }
+      responses:
+        '200':
+          description: Товари
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/ApparelItem' } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /catalog/categories:
+    get:
+      tags: [Catalog]
+      operationId: listCategories
+      summary: Категорії каталогу
+      responses:
+        '200':
+          description: Категорії
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Category' } }
+
+  /catalog/{id}:
+    get:
+      tags: [Catalog]
+      operationId: getCatalogItem
+      summary: Деталі товару
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Товар
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApparelItem' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/catalog:
+    post:
+      tags: [Admin]
+      operationId: createCatalogItem
+      summary: Додати товар у каталог
+      parameters: [{ $ref: '#/components/parameters/AdminRole' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateApparelItemRequest' }
+      responses:
+        '201':
+          description: Створено
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApparelItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/catalog/{id}:
+    patch:
+      tags: [Admin]
+      operationId: updateCatalogItem
+      summary: Змінити ціну та/або наявність
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/AdminRole' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Потрібне хоча б одне поле
+              properties:
+                basePrice: { type: number, minimum: 0 }
+                inStock: { type: boolean }
+      responses:
+        '200':
+          description: Оновлений товар
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApparelItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /customizer/uploads:
+    post:
+      tags: [Customizer]
+      operationId: uploadPrint
+      summary: Завантажити файл принта (png, jpg, jpeg, webp, svg; до 20 МБ)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Файл збережено
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [printFileUrl]
+                properties:
+                  printFileUrl: { type: string, format: uri }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+
+  /customizer/products:
+    post:
+      tags: [Customizer]
+      operationId: createCustomProduct
+      summary: Створити кастомний виріб (генерує прев'ю і рахує вартість)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baseItemId, prints]
+              properties:
+                baseItemId: { type: string }
+                prints:
+                  type: array
+                  minItems: 1
+                  maxItems: 6
+                  items: { $ref: '#/components/schemas/PrintConfigurationInput' }
+      responses:
+        '201':
+          description: Створено
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomProduct' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /customizer/products/{id}:
+    get:
+      tags: [Customizer]
+      operationId: getCustomProduct
+      summary: Отримати кастомний виріб
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Кастомний виріб
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomProduct' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /delivery/shipping-cost:
+    get:
+      tags: [Delivery]
+      operationId: getShippingCost
+      summary: Орієнтовна вартість доставки Новою Поштою (відділення → відділення)
+      parameters:
+        - { name: city, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: weightKg, in: query, required: true, schema: { type: number, exclusiveMinimum: 0 } }
+      responses:
+        '200':
+          description: Вартість
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [city, weightKg, cost, currency]
+                properties:
+                  city: { type: string }
+                  weightKg: { type: number }
+                  cost: { type: number }
+                  currency: { type: string, const: UAH }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+
+  /orders:
+    post:
+      tags: [Orders]
+      operationId: createOrder
+      summary: Створити замовлення з кастомних виробів (ціни фіксуються, доставка рахується)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateOrderRequest' }
+      responses:
+        '201':
+          description: Замовлення створено (статус CREATED)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      operationId: getOrder
+      summary: Замовлення (для сторінки відстеження; опитувати періодично)
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Замовлення
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /orders/{id}/checkout:
+    post:
+      tags: [Orders]
+      operationId: checkoutOrder
+      summary: Виставити рахунок. Далі редірект на checkoutUrl (або POST-форма з data і signature)
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Рахунок
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentInvoice' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      operationId: paymentWebhook
+      summary: Server-to-server callback LiqPay. Фронтенд його не викликає
+      description: Ідемпотентний. Невалідний підпис → 400. Сума має збігатися із сумою замовлення (інакше 409).
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [data, signature]
+              properties:
+                data: { type: string, description: base64(JSON) }
+                signature: { type: string, description: base64(sha1(private_key + data + private_key)) }
+      responses:
+        '200':
+          description: Прийнято
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean, const: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /manager/orders:
+    get:
+      tags: [Manager]
+      operationId: listOrdersByStatus
+      summary: Замовлення за статусом (за замовчуванням на перевірці макета)
+      parameters:
+        - $ref: '#/components/parameters/ManagerRole'
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/OrderStatus', default: PENDING_REVIEW }
+      responses:
+        '200':
+          description: Замовлення у статусі, від старших до новіших
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Order' } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /manager/orders/{id}/verify-mockup:
+    post:
+      tags: [Manager]
+      operationId: verifyMockup
+      summary: Схвалити макет (→ PRINTING) або відхилити (повернення коштів → CANCELLED)
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/ManagerRole' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [approved]
+              properties:
+                approved: { type: boolean }
+      responses:
+        '200':
+          description: Оновлене замовлення
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderActionResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+
+  /manager/orders/{id}/status:
+    patch:
+      tags: [Manager]
+      operationId: changeOrderStatus
+      summary: Ручна зміна статусу (SHIPPED, CANCELLED). PAID/PENDING_REVIEW/PRINTING вручну не ставляться
+      description: Скасування оплаченого замовлення автоматично повертає кошти. SHIPPED створює ТТН Нової Пошти.
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/ManagerRole' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { $ref: '#/components/schemas/OrderStatus' }
+      responses:
+        '200':
+          description: Оновлене замовлення
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderActionResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+
+  /manager/orders/{id}/notify:
+    post:
+      tags: [Manager]
+      operationId: retryOrderNotifications
+      summary: Повторити сповіщення про поточний статус (якщо warnings були непорожні, напр. ТТН не створилась)
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/ManagerRole' }]
+      responses:
+        '200':
+          description: Замовлення після повтору
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderActionResult' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    AdminRole:
+      name: x-user-role
+      in: header
+      required: true
+      schema: { type: string, const: admin }
+    ManagerRole:
+      name: x-user-role
+      in: header
+      required: true
+      schema: { type: string, const: manager }
+
+  responses:
+    BadRequest:
+      description: Невалідний запит (VALIDATION_ERROR, UPLOAD_ERROR)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: Немає потрібної ролі (FORBIDDEN)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Не знайдено (NOT_FOUND)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Конфлікт стану, напр. недопустимий перехід статусу (CONFLICT)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    TooLarge:
+      description: Файл більший за 20 МБ (UPLOAD_ERROR)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    BadGateway:
+      description: Помилка зовнішнього сервісу (EXTERNAL_SERVICE_ERROR)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  schemas:
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          enum: [VALIDATION_ERROR, NOT_FOUND, CONFLICT, FORBIDDEN, UPLOAD_ERROR, EXTERNAL_SERVICE_ERROR, INTERNAL_ERROR]
+        message: { type: string }
+        details: { description: Лише для VALIDATION_ERROR від zod }
+
+    ApparelKind: { type: string, enum: [TOP, BOTTOM, ACCESSORY] }
+    PrintPlacement: { type: string, enum: [CHEST, BACK, LEFT_LEG, RIGHT_LEG, SLEEVE, ACCESSORY_FRONT] }
+    PrintTechnology: { type: string, enum: [DTG, DTF, EMBROIDERY, SUBLIMATION] }
+    OrderStatus: { type: string, enum: [CREATED, PAID, PENDING_REVIEW, PRINTING, SHIPPED, CANCELLED] }
+
+    Category:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+
+    ApparelItem:
+      type: object
+      description: Поля hasHood/hasPockets є лише в TOP, waistCm/lengthCm у BOTTOM, accessoryType в ACCESSORY
+      required: [id, kind, title, basePrice, size, color, fabricComposition, inStock, category, productionCost, allowedPlacements]
+      properties:
+        id: { type: string }
+        kind: { $ref: '#/components/schemas/ApparelKind' }
+        title: { type: string }
+        basePrice: { type: number }
+        size: { type: string }
+        color: { type: string }
+        fabricComposition: { type: string }
+        inStock: { type: boolean }
+        category: { $ref: '#/components/schemas/Category' }
+        productionCost: { type: number, description: 'Вартість підготовки до друку, грн' }
+        allowedPlacements: { type: array, items: { $ref: '#/components/schemas/PrintPlacement' } }
+        hasHood: { type: boolean }
+        hasPockets: { type: boolean }
+        waistCm: { type: number }
+        lengthCm: { type: number }
+        accessoryType: { type: string }
+
+    CreateApparelItemRequest:
+      type: object
+      required: [kind, title, basePrice, size, color, categoryId]
+      properties:
+        kind: { $ref: '#/components/schemas/ApparelKind' }
+        title: { type: string, minLength: 1 }
+        basePrice: { type: number, minimum: 0 }
+        size: { type: string, minLength: 1 }
+        color: { type: string, minLength: 1 }
+        fabricComposition: { type: string, default: '' }
+        inStock: { type: boolean, default: true }
+        categoryId: { type: string }
+        hasHood: { type: boolean, description: 'Обовʼязково для TOP' }
+        hasPockets: { type: boolean, description: 'Обовʼязково для TOP' }
+        waistCm: { type: number, exclusiveMinimum: 0, description: 'Обовʼязково для BOTTOM' }
+        lengthCm: { type: number, exclusiveMinimum: 0, description: 'Обовʼязково для BOTTOM' }
+        accessoryType: { type: string, description: 'Обовʼязково для ACCESSORY' }
+
+    PrintConfigurationInput:
+      type: object
+      description: |
+        Розміри в мм, зміщення від центру зони. Межі зон (ширина×висота, мм): CHEST 300×400, BACK 350×450,
+        SLEEVE 100×100, LEFT_LEG/RIGHT_LEG 150×300, ACCESSORY_FRONT 200×200. Одна зона = один принт.
+      required: [printFileUrl, placement, technology, widthMm, heightMm]
+      properties:
+        printFileUrl: { type: string, format: uri, description: URL з /customizer/uploads }
+        placement: { $ref: '#/components/schemas/PrintPlacement' }
+        technology: { $ref: '#/components/schemas/PrintTechnology' }
+        widthMm: { type: number, exclusiveMinimum: 0 }
+        heightMm: { type: number, exclusiveMinimum: 0 }
+        offsetX: { type: number, default: 0 }
+        offsetY: { type: number, default: 0 }
+        scale: { type: number, exclusiveMinimum: 0, default: 1 }
+
+    PrintConfiguration:
+      allOf:
+        - $ref: '#/components/schemas/PrintConfigurationInput'
+        - type: object
+          required: [offsetX, offsetY, scale, printCost]
+          properties:
+            printCost: { type: number }
+
+    CustomProduct:
+      type: object
+      required: [id, baseItem, prints, previewImageUrl, mockupApproved, totalCost]
+      properties:
+        id: { type: string }
+        baseItem: { $ref: '#/components/schemas/ApparelItem' }
+        prints: { type: array, items: { $ref: '#/components/schemas/PrintConfiguration' } }
+        previewImageUrl: { type: [string, 'null'] }
+        mockupApproved: { type: boolean }
+        totalCost: { type: number, description: 'Ціна виробу + підготовка + принти, грн' }
+
+    RecipientDetails:
+      type: object
+      required: [fullName, phone, email, city, warehouse]
+      properties:
+        fullName: { type: string, description: Прізвище та імʼя (мінімум два слова) }
+        phone: { type: string, description: 'Український номер; у відповіді нормалізований до 380XXXXXXXXX' }
+        email: { type: string, format: email }
+        city: { type: string }
+        warehouse: { type: string, pattern: '^\d+$', description: Номер відділення Нової Пошти }
+
+    CreateOrderRequest:
+      type: object
+      required: [items, recipient]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            type: object
+            required: [customProductId]
+            properties:
+              customProductId: { type: string }
+              quantity: { type: integer, minimum: 1, maximum: 100, default: 1 }
+        recipient: { $ref: '#/components/schemas/RecipientDetails' }
+
+    Order:
+      type: object
+      required:
+        [id, status, allowedNextStatuses, items, recipient, shippingCost, total, currency, ttnNumber, paymentTransactionId, createdAt]
+      properties:
+        id: { type: string }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        allowedNextStatuses: { type: array, items: { $ref: '#/components/schemas/OrderStatus' } }
+        items:
+          type: array
+          items:
+            type: object
+            required: [customProductId, quantity, unitPrice, lineTotal]
+            properties:
+              customProductId: { type: string }
+              quantity: { type: integer }
+              unitPrice: { type: number }
+              lineTotal: { type: number }
+        recipient: { $ref: '#/components/schemas/RecipientDetails' }
+        shippingCost: { type: number }
+        total: { type: number }
+        currency: { type: string, const: UAH }
+        ttnNumber: { type: [string, 'null'] }
+        paymentTransactionId: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+
+    OrderActionResult:
+      allOf:
+        - $ref: '#/components/schemas/Order'
+        - type: object
+          required: [warnings]
+          properties:
+            warnings:
+              type: array
+              items: { type: string }
+              description: Помилки спостерігачів (Нова Пошта, email). Статус уже змінено; можна повторити через /notify
+
+    PaymentInvoice:
+      type: object
+      required: [orderId, amount, currency, checkoutUrl, data, signature]
+      properties:
+        orderId: { type: string }
+        amount: { type: number }
+        currency: { type: string, const: UAH }
+        checkoutUrl: { type: string, format: uri }
+        data: { type: string }
+        signature: { type: string }

@@ -64,3 +64,43 @@ describe('NovaPoshtaDeliveryObserver', () => {
     expect(generateTTN).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('NovaPoshtaDeliveryObserver + TtnStore (ТТН зберігається в замовленні)', () => {
+  function withStore(initial: Record<string, string> = {}) {
+    const stored = new Map(Object.entries(initial));
+    const store = {
+      get: vi.fn(async (id: string) => stored.get(id) ?? null),
+      save: vi.fn(async (id: string, ttn: string) => void stored.set(id, ttn)),
+    };
+    const generateTTN = vi.fn(async () => 'TTN-1');
+    const service: IDeliveryService = { calculateShippingCost: async () => 70, generateTTN };
+    const observer = new NovaPoshtaDeliveryObserver(service, async () => recipient, store);
+    return { observer, store, stored, generateTTN };
+  }
+
+  it('створена ТТН зберігається в сховищі', async () => {
+    const { observer, stored } = withStore();
+    await observer.onOrderStatusChanged('o1', OrderStatus.SHIPPED);
+    expect(stored.get('o1')).toBe('TTN-1');
+    expect(observer.getTtnNumber('o1')).toBe('TTN-1');
+  });
+
+  it('після перезапуску (порожня памʼять) ТТН зі сховища не створюється вдруге', async () => {
+    const { observer, generateTTN, store } = withStore({ o1: 'TTN-OLD' });
+    await observer.onOrderStatusChanged('o1', OrderStatus.SHIPPED);
+    expect(generateTTN).not.toHaveBeenCalled();
+    expect(store.save).not.toHaveBeenCalled();
+    expect(observer.getTtnNumber('o1')).toBe('TTN-OLD');
+  });
+
+  it('негатив: збереження впало; повтор лише зберігає ту саму ТТН, без нового виклику API', async () => {
+    const { observer, store, stored, generateTTN } = withStore();
+    store.save.mockRejectedValueOnce(new Error('db down'));
+    await expect(observer.onOrderStatusChanged('o1', OrderStatus.SHIPPED)).rejects.toThrow('db down');
+    expect(stored.has('o1')).toBe(false);
+
+    await observer.onOrderStatusChanged('o1', OrderStatus.SHIPPED);
+    expect(generateTTN).toHaveBeenCalledTimes(1);
+    expect(stored.get('o1')).toBe('TTN-1');
+  });
+});
