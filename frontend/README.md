@@ -1,32 +1,43 @@
-# React + TypeScript + Vite
+# Merch Platform: frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 SPA (Vite, TypeScript strict, React Router, TanStack Query).
 
-Currently, two official plugins are available:
+## Запуск
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+# з кореня репозиторію, бекенд має працювати на :3000
+npm run dev:backend
+npm run dev:frontend   # http://localhost:5173, запити /api/* проксюються на бекенд
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Скрипти (`npm run <script> -w frontend`)
+
+| Скрипт | Що робить |
+| --- | --- |
+| `dev` | Vite dev server на 5173 |
+| `build` | typecheck + production-збірка |
+| `typecheck` / `lint` | TypeScript / oxlint |
+| `test` / `test:watch` | Vitest (jsdom + Testing Library + MSW) |
+| `test:e2e` | Playwright, сам піднімає бекенд (3100, in-memory) і фронтенд (5180) |
+| `gen:api` | типи `src/api/schema.d.ts` з `packages/contracts/openapi.yaml` |
+
+## Структура
+
+```
+src/
+  api/          єдиний шар запитів (openapi-fetch + ApiError), роль, dev-оплата
+  app/          маршрути, Layout, провайдери, перемикач ролі, індикатор API
+  features/
+    catalog/    вітрина, фільтри (URL), сторінка товару
+    customizer/ завантаження, позиціонування (clampToArea, calculatePosition), useCustomizer
+    cart/       кошик (localStorage)
+    checkout/   отримувач, доставка, створення замовлення
+    orders/     сторінка замовлення (таймлайн, polling), результат оплати
+    manager/    перевірка макетів, зміна статусів
+    admin/      керування каталогом
+  shared/       форматування, підписи, силуети виробів, спільні стани
+  test/         MSW-сервер, фікстури, renderApp
+e2e/            Playwright
+```
+
+Правила: компоненти не викликають `fetch` напряму (лише `src/api/*`), без `any`, кожен запит має стани loading/error.
