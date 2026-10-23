@@ -31,7 +31,11 @@ backend/src/
     order/ payment/ notification/
   infra/                конфіг, БД і міграції, HTTP-утиліти, composition root (container.ts)
   app.ts                збирає всі модулі; main.ts: точка входу
-frontend/               React SPA (Vite)
+frontend/
+  src/api/              єдиний шар запитів до бекенду (типи з OpenAPI)
+  src/features/         catalog, customizer, cart, checkout, orders, manager, admin
+  src/app/ src/shared/  маршрути, шапка, провайдери; спільні компоненти
+  e2e/                  Playwright-сценарії
 docs/diagrams/          C4 та UML
 ```
 
@@ -63,8 +67,10 @@ docker compose up -d postgres
 npm run migrate -w backend        # застосувати міграції
 npm run seed -w backend           # стартові дані каталогу
 npm run dev:backend               # http://localhost:3000/health
-npm run dev:frontend              # http://localhost:5173
+npm run dev:frontend              # http://localhost:5173 (в окремому терміналі)
 ```
+
+Бекенд і фронтенд запускаються локально (Node), у Docker лише Postgres (і MinIO за потреби).
 
 > Порт БД у `docker-compose.yml` і в `DATABASE_URL` (`.env`) мають збігатися. Якщо 5432 зайнятий локальним Postgres, змініть обидва.
 
@@ -84,14 +90,54 @@ npm run dev:frontend              # http://localhost:5173
 ## Тестування
 
 ```bash
-npm run typecheck                         # TypeScript
-npm run lint                              # ESLint
+npm run typecheck                         # TypeScript (бекенд, contracts, фронтенд)
+npm run lint                              # ESLint (бекенд) + oxlint (фронтенд)
 npm test                                  # усі unit-тести
+npm run test:e2e -w frontend              # e2e (Playwright), див. розділ «Фронтенд»
 npm run test:coverage -w backend          # покриття
 TEST_DATABASE_URL=postgres://merch:merch@localhost:5432/merch npm test -w backend   # + тести на справжній БД
 ```
 
 Без `TEST_DATABASE_URL` тести на БД пропускаються. Вимоги до тестів: покриття доменної логіки від 80%, у кожного публічного методу є щонайменше happy path і один негативний сценарій, зовнішні залежності (БД, S3, HTTP) підміняються fake-реалізаціями. CI запускає лінтер, typecheck і тести на кожен PR.
+
+## Фронтенд
+
+React 19 SPA: Vite, TypeScript (strict), React Router, TanStack Query, openapi-fetch. Інтерфейс українською, адаптивний (телефон/десктоп), світла й темна тема.
+
+### Сторінки
+
+| Шлях                        | Що там                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `/catalog`                  | вітрина: варіанти товару згруповані, фільтри (категорія, розмір, колір, ціна, наявність) зберігаються в URL |
+| `/product/:id`              | деталі товару, вибір кольору й розміру, «Створити дизайн»                                                  |
+| `/customizer?baseItemId=…`  | конструктор: завантаження принта (png/jpg/webp/svg до 20 МБ), зони друку, перетягування, масштаб, зсув X/Y |
+| `/cart`                     | кошик (зберігається в браузері), кількість, сума                                                           |
+| `/checkout`                 | дані отримувача з валідацією, вартість доставки Новою Поштою, створення замовлення                         |
+| `/orders/:id`               | таймлайн статусу (автооновлення), позиції, ТТН, кнопка оплати                                               |
+| `/payment-result?orderId=…` | повернення з LiqPay, очікування підтвердження оплати                                                       |
+| `/manager`                  | перевірка макетів (схвалити / відхилити), відправка, скасування (роль manager)                             |
+| `/admin`                    | додавання товарів, зміна цін і наявності (роль admin)                                                      |
+
+### Як фронтенд працює з бекендом
+
+- У розробці SPA шле запити на `/api/*`, Vite проксює їх на `http://localhost:3000` (CORS не потрібен). Інша адреса бекенду: змінна `BACKEND_URL` під час запуску `dev`.
+- Усі запити йдуть лише через `frontend/src/api/`. Типи згенеровані з OpenAPI; після змін у `packages/contracts/openapi.yaml` виконайте `npm run gen:api -w frontend`.
+- **Роль** обирається в шапці («Покупець / Менеджер / Адміністратор») і передається бекенду в заголовку `x-user-role` (тимчасово, як і на бекенді). Права перевіряє бекенд: без потрібної ролі сторінки менеджера й адміна покажуть 403.
+- **Оплата без ключів LiqPay**: у режимі розробки на `/payment-result` є кнопка «Імітувати успішну оплату». Вона надсилає бекенду підписаний callback dev-заглушки (замість команди `tsx` + `curl` нижче). У production-збірку кнопка не потрапляє.
+- Межі зон друку, тарифи, правила файлів і отримувача продубльовані з бекенду для миттєвої перевірки на клієнті (у коді є посилання на файли-джерела). Остаточно все перевіряє й рахує бекенд.
+
+### Скрипти (`npm run <script> -w frontend`)
+
+| Скрипт                | Що робить                                                                          |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `dev`                 | dev-сервер на http://localhost:5173 (те саме, що `npm run dev:frontend` з кореня) |
+| `build` / `preview`   | production-збірка в `frontend/dist` / її перегляд                                 |
+| `typecheck` / `lint`  | TypeScript / oxlint                                                                |
+| `test` / `test:watch` | Vitest + Testing Library + MSW (без бекенду)                                       |
+| `test:e2e`            | Playwright: сам запускає бекенд (порт 3100, in-memory) і фронтенд (5180)           |
+| `gen:api`             | типи `src/api/schema.d.ts` з OpenAPI                                               |
+
+Перед першим запуском e2e: `cd frontend && npx playwright install chromium`. Сценарії: повний шлях «каталог → конструктор → кошик → оформлення → оплата → схвалення макета → відправка з ТТН» і відхилення макета менеджером.
 
 ## REST API (реалізовано)
 
@@ -117,7 +163,7 @@ TEST_DATABASE_URL=postgres://merch:merch@localhost:5432/merch npm test -w backen
 
 Помилки повертаються у форматі `{ "error": "CODE", "message": "..." }` (400, 403, 404, 409, 413, 502).
 
-Повна специфікація: [`packages/contracts/openapi.yaml`](packages/contracts/openapi.yaml). Типи для фронтенду: `npx openapi-typescript packages/contracts/openapi.yaml -o frontend/src/api/schema.d.ts`.
+Повна специфікація: [`packages/contracts/openapi.yaml`](packages/contracts/openapi.yaml). Типи для фронтенду: `npm run gen:api -w frontend`.
 
 ### Життєвий цикл замовлення
 
@@ -142,7 +188,7 @@ npx tsx -e "import { StubPaymentStrategy as S } from './backend/src/modules/paym
 
 | Зона      | Відповідальність                                                          | Статус   |
 | --------- | ------------------------------------------------------------------------- | -------- |
-| Frontend  | React SPA: вітрина, конструктор, кошик, чекаут, панелі менеджера й адміна | в роботі |
+| Frontend  | React SPA: вітрина, конструктор, кошик, чекаут, панелі менеджера й адміна | виконано |
 | Backend 1 | Catalog, Customizer, Delivery, інфраструктура, composition root           | виконано |
 | Backend 2 | Order, Payment (LiqPay), Notification                                     | виконано |
 

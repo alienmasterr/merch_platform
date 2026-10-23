@@ -1,6 +1,6 @@
 # Merch Platform: frontend
 
-React 19 SPA (Vite, TypeScript strict, React Router, TanStack Query). Покроковий звіт: [STEPS.md](STEPS.md).
+React 19 SPA (Vite, TypeScript strict, React Router, TanStack Query).
 
 ## Запуск
 
