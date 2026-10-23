@@ -28,6 +28,21 @@ const schema = z
     NP_CONTACT_SENDER_REF: z.string().optional(),
     NP_SENDER_ADDRESS_REF: z.string().optional(),
     NP_SENDER_PHONE: z.string().optional(),
+
+    /** Без ключів LiqPay працює dev-заглушка оплати (див. README). */
+    LIQPAY_PUBLIC_KEY: z.string().optional(),
+    LIQPAY_PRIVATE_KEY: z.string().optional(),
+    LIQPAY_SANDBOX: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
+    /** Сторінка SPA, куди повертається клієнт після оплати. */
+    PAYMENT_RESULT_URL: z.string().default('http://localhost:5173/payment-result'),
+
+    /** Без SMTP_HOST листи друкуються в консоль. */
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.coerce.number().int().positive().default(587),
+    SMTP_SECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    MAIL_FROM: z.string().default('Merch Platform <no-reply@merch.local>'),
   })
   .superRefine((cfg, ctx) => {
     const need = (cond: boolean, path: string, message: string): void => {
@@ -43,6 +58,9 @@ const schema = z
       for (const key of ['NP_SENDER_REF', 'NP_CONTACT_SENDER_REF', 'NP_SENDER_ADDRESS_REF', 'NP_SENDER_PHONE'] as const) {
         need(!!cfg[key], key, 'required when NOVA_POSHTA_API_KEY is set');
       }
+    }
+    if (!!cfg.LIQPAY_PUBLIC_KEY !== !!cfg.LIQPAY_PRIVATE_KEY) {
+      need(false, 'LIQPAY_PRIVATE_KEY', 'LIQPAY_PUBLIC_KEY and LIQPAY_PRIVATE_KEY must be set together');
     }
   });
 

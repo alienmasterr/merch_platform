@@ -77,6 +77,9 @@ npm run dev:frontend              # http://localhost:5173
 | `PERSISTENCE`         | `memory` (за замовчуванням) / `postgres`     | `memory` не потребує БД, дані скидаються при перезапуску         |
 | `STORAGE_DRIVER`      | `local` (за замовчуванням) / `s3` / `memory` | `local` зберігає файли в `.data/uploads` і віддає їх на `/files` |
 | `NOVA_POSHTA_API_KEY` | ключ або порожньо                            | без ключа працює заглушка (доставка 70 грн, ТТН `DEV-…`)         |
+| `LIQPAY_PUBLIC_KEY`, `LIQPAY_PRIVATE_KEY` | ключі або порожньо           | без ключів dev-заглушка оплати: "оплата" одразу веде на `PAYMENT_RESULT_URL`, повернення коштів лише логуються |
+| `LIQPAY_SANDBOX`      | `true` (за замовчуванням) / `false`          | тестові платежі LiqPay; у `false` статус `sandbox` не вважається оплатою |
+| `SMTP_HOST` (+ `SMTP_*`, `MAIL_FROM`) | хост або порожньо            | без SMTP листи клієнтам друкуються в консоль                      |
 
 ## Тестування
 
@@ -102,9 +105,36 @@ TEST_DATABASE_URL=postgres://merch:merch@localhost:5432/merch npm test -w backen
 | POST        | `/customizer/products`                 | створити кастомний виріб (повертає прев'ю та вартість)                                       |
 | GET         | `/customizer/products/:id`             | отримати кастомний виріб                                                                     |
 | GET         | `/delivery/shipping-cost`              | вартість доставки (`city`, `weightKg`)                                                       |
+| POST        | `/orders`                              | створити замовлення з кастомних виробів і даних отримувача (ціни фіксуються, рахується доставка) |
+| GET         | `/orders/:id`                          | замовлення (статус, сума, ТТН)                                                               |
+| POST        | `/orders/:id/checkout`                 | рахунок LiqPay: `checkoutUrl` для редіректу або `data` + `signature` для POST-форми          |
+| POST        | `/payments/webhook`                    | callback LiqPay (form-urlencoded `data`, `signature`), ідемпотентний                         |
+| GET         | `/manager/orders?status=`              | замовлення за статусом, за замовчуванням `PENDING_REVIEW` (роль manager)                     |
+| POST        | `/manager/orders/:id/verify-mockup`    | `{ approved }`: так → `PRINTING`, ні → повернення коштів і `CANCELLED` (роль manager)        |
+| PATCH       | `/manager/orders/:id/status`           | ручна зміна статусу: `SHIPPED` (створює ТТН), `CANCELLED` (роль manager)                     |
+| POST        | `/manager/orders/:id/notify`           | повторити сповіщення, якщо у відповіді були `warnings` (роль manager)                        |
 | POST, PATCH | `/admin/catalog`, `/admin/catalog/:id` | керування каталогом (роль admin)                                                             |
 
 Помилки повертаються у форматі `{ "error": "CODE", "message": "..." }` (400, 403, 404, 409, 413, 502).
+
+Повна специфікація: [`packages/contracts/openapi.yaml`](packages/contracts/openapi.yaml). Типи для фронтенду: `npx openapi-typescript packages/contracts/openapi.yaml -o frontend/src/api/schema.d.ts`.
+
+### Життєвий цикл замовлення
+
+```
+CREATED ──оплата (webhook)──▶ PAID ──▶ PENDING_REVIEW ──макет схвалено──▶ PRINTING ──▶ SHIPPED (ТТН)
+   │                                        │
+   └──────────────▶ CANCELLED ◀─────────────┘  (макет відхилено або скасування: оплачене повертається)
+```
+
+Спостерігачі `Order` підключені в `app.ts`: `NovaPoshtaDeliveryObserver` на `SHIPPED` створює ТТН і зберігає її в замовленні, `EmailNotificationObserver` надсилає чек на `PAID` і листи на `PRINTING`, `SHIPPED`, `CANCELLED`. Помилка спостерігача не відкочує статус: вона приходить менеджеру в `warnings`, а дію можна повторити через `/notify`.
+
+Перевірити оплату локально без ключів LiqPay можна підписаним callback dev-заглушки:
+
+```bash
+npx tsx -e "import { StubPaymentStrategy as S } from './backend/src/modules/payment/infrastructure/stub-payment-strategy.ts'; console.log(new URLSearchParams(S.successCallback('<orderId>', <total>)).toString())" \
+  | curl -s -X POST -H 'content-type: application/x-www-form-urlencoded' --data @- http://localhost:3000/payments/webhook
+```
 
 > Авторизація поки тимчасова: роль береться із заголовка `x-user-role`. Перед використанням поза розробкою її потрібно замінити на справжню автентифікацію.
 
@@ -114,7 +144,7 @@ TEST_DATABASE_URL=postgres://merch:merch@localhost:5432/merch npm test -w backen
 | --------- | ------------------------------------------------------------------------- | -------- |
 | Frontend  | React SPA: вітрина, конструктор, кошик, чекаут, панелі менеджера й адміна | в роботі |
 | Backend 1 | Catalog, Customizer, Delivery, інфраструктура, composition root           | виконано |
-| Backend 2 | Order, Payment (LiqPay), Notification                                     | в роботі |
+| Backend 2 | Order, Payment (LiqPay), Notification                                     | виконано |
 
 ### Правила командної роботи
 
@@ -128,4 +158,5 @@ TEST_DATABASE_URL=postgres://merch:merch@localhost:5432/merch npm test -w backen
 
 - Інтеграція з Новою Поштою перевірена тільки на mock-HTTP; перед використанням потрібен тестовий ключ.
 - Прев'ю макета це простий SVG-мокап, а не фотореалістичне зображення.
-- Номер ТТН зберігається в пам'яті спостерігача й губиться після перезапуску (його має зберігати модуль замовлень).
+- Інтеграція з LiqPay (checkout, callback, refund) перевірена на тестових підписах; перед використанням потрібні sandbox-ключі.
+- Вага посилки для доставки рахується як 0,5 кг на виріб.

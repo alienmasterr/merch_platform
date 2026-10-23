@@ -71,8 +71,8 @@ describe('Backend integration (memory)', () => {
 
   it('delivery observer доступний для підписки на Order (контракт зі C)', async () => {
     const { modules } = await start();
-    // recipientProvider ще не підключений, тому SHIPPED кидає зрозумілу помилку, інші статуси ігноруються
+    // інші статуси ігноруються; для неіснуючого замовлення SHIPPED кидає NotFound з order-репозиторію
     await expect(modules.delivery.observer.onOrderStatusChanged('o1', OrderStatus.PAID)).resolves.toBeUndefined();
-    await expect(modules.delivery.observer.onOrderStatusChanged('o1', OrderStatus.SHIPPED)).rejects.toThrow(/not wired/);
+    await expect(modules.delivery.observer.onOrderStatusChanged('o1', OrderStatus.SHIPPED)).rejects.toThrow(/not found/);
   });
 });
