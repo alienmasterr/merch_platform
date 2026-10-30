@@ -7,7 +7,7 @@ import type { Order, OrderActionResult } from '../../api/types';
 import { formatDateTime, formatMoney } from '../../shared/format';
 import { PLACEMENT_LABELS, STATUS_LABELS, TECHNOLOGY_LABELS } from '../../shared/labels';
 import { ErrorMessage } from '../../shared/QueryState';
-import { ProductMockup } from '../customizer/ProductMockup';
+import { ProductViews } from '../customizer/ProductViews';
 import { useCustomProducts } from '../customizer/useCustomProducts';
 import { orderKey } from '../orders/orderKeys';
 import { cancelRefunds, canReviewMockup, manualTransitions } from './managerActions';
@@ -71,7 +71,7 @@ export function ManagerOrderCard({ order, onResult }: Props) {
           const product = products.byId[item.customProductId];
           return (
             <figure key={item.customProductId} className="mockup-review">
-              {product ? <ProductMockup product={product} /> : <div className="mockup" />}
+              {product ? <ProductViews product={product} /> : <div className="mockup" />}
               <figcaption className="small stack">
                 <strong>
                   {product?.baseItem.title ?? 'Виріб'} × {item.quantity}
@@ -85,11 +85,6 @@ export function ManagerOrderCard({ order, onResult }: Props) {
                     </a>
                   </span>
                 ))}
-                {product?.previewImageUrl && (
-                  <a href={product.previewImageUrl} target="_blank" rel="noreferrer">
-                    Прев'ю з сервера
-                  </a>
-                )}
               </figcaption>
             </figure>
           );

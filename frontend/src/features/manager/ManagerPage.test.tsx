@@ -3,7 +3,15 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { setRole } from '../../api/session';
 import { renderApp } from '../../test/render';
-import { apiUrl, buildOrder, orders, server, withStatus } from '../../test/server';
+import {
+  apiUrl,
+  buildCustomProduct,
+  buildOrder,
+  customProducts,
+  orders,
+  server,
+  withStatus,
+} from '../../test/server';
 import { cancelRefunds, canReviewMockup, manualTransitions } from './managerActions';
 
 const recipient = {
@@ -49,9 +57,12 @@ describe('managerActions', () => {
 });
 
 describe('ManagerPage', () => {
-  it('shows 403 from the backend without the manager role', async () => {
+  it('shows a red "no rights" alert and no orders without the manager role', async () => {
+    seed('order-1', 'PENDING_REVIEW');
     renderApp('/manager');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Недостатньо прав');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Недостатньо прав для цієї дії');
+    expect(screen.queryByRole('tablist', { name: 'Статус замовлень' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
   });
 
   it('lists orders waiting for review and approves a mockup', async () => {
@@ -130,6 +141,33 @@ describe('ManagerPage', () => {
     await user.click(screen.getByRole('button', { name: 'Повторити сповіщення' }));
     await waitFor(() => expect(notified).toBe(1));
     expect(await screen.findByRole('status')).toHaveTextContent('ТТН DEV-2');
+  });
+
+  it('shows front and back mockups of the product without the server preview link', async () => {
+    const print = {
+      printFileUrl: 'http://localhost:3000/files/a.png',
+      technology: 'DTG' as const,
+      widthMm: 100,
+      heightMm: 100,
+      offsetX: 0,
+      offsetY: 0,
+      scale: 1,
+    };
+    customProducts.set(
+      'cp-x',
+      buildCustomProduct('cp-x', 'tee-white-m', [
+        { ...print, placement: 'CHEST' },
+        { ...print, placement: 'BACK' },
+      ]),
+    );
+    setRole('manager');
+    seed('order-1', 'SHIPPED');
+    renderApp('/manager?status=SHIPPED');
+    const card = await screen.findByRole('article', { name: 'Замовлення order-1' });
+    expect(await within(card).findByRole('img', { name: /спереду/ })).toBeInTheDocument();
+    expect(within(card).getByRole('img', { name: /ззаду/ })).toBeInTheDocument();
+    expect(within(card).getAllByRole('link', { name: 'оригінал' })).toHaveLength(2);
+    expect(within(card).queryByText("Прев'ю з сервера")).not.toBeInTheDocument();
   });
 
   it('switches tabs via the URL', async () => {

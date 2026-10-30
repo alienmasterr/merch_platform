@@ -13,13 +13,19 @@ export function SavedProduct({
 }) {
   return (
     <div className="stack" aria-label="Збережений дизайн">
-      <div className="alert alert--success">Дизайн збережено. Ціну розраховано на сервері.</div>
+      <div className="alert alert--success">Дизайн збережено.</div>
       {product.previewImageUrl && (
         // <object>, а не <img>: SVG-прев'ю посилається на файл принта, а в <img> зовнішні ресурси не вантажаться
         <object
           data={product.previewImageUrl}
           type="image/svg+xml"
           className="server-preview"
+          // бекенд малює поруч вид ззаду, якщо є принт на спині
+          style={{
+            aspectRatio: product.prints.some((p) => p.placement === 'BACK')
+              ? '1200 / 740'
+              : '6 / 7',
+          }}
           aria-label="Прев'ю"
         >
           <a href={product.previewImageUrl} target="_blank" rel="noreferrer">

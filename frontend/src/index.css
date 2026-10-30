@@ -357,23 +357,6 @@ textarea:focus-visible,
   }
 }
 
-.status-dot {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  margin-right: 6px;
-  background: var(--muted);
-}
-
-.status-dot--ok {
-  background: var(--success);
-}
-
-.status-dot--down {
-  background: var(--danger);
-}
-
 .stack > p,
 .stack > h1,
 .stack > h2,
@@ -678,8 +661,7 @@ input[type='range'] {
 .server-preview {
   display: block;
   width: 100%;
-  max-width: 320px;
-  aspect-ratio: 6 / 7;
+  max-width: 520px;
   margin: 0 auto;
   border-radius: 8px;
   background: var(--surface-2);
@@ -863,20 +845,37 @@ input[aria-invalid='true'] {
 }
 
 .mockup-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
+/* виріб: мокапи зліва, параметри принтів справа (на телефоні під ними) */
 .mockup-review {
   margin: 0;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 20px;
 }
 
-.mockup-review .mockup {
-  max-width: 260px;
+.mockup-review > figcaption {
+  flex: 1 1 220px;
+}
+
+.product-views {
+  display: flex;
+  gap: 12px;
+}
+
+.product-views__item {
+  margin: 0;
+  width: 220px;
+  max-width: calc(50vw - 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .alert ul {
@@ -896,4 +895,21 @@ input[aria-invalid='true'] {
 
 .price-edit input {
   width: 90px;
+}
+
+.admin-filters {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(140px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+@media (max-width: 860px) {
+  .admin-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-filters__search {
+    grid-column: 1 / -1;
+  }
 }

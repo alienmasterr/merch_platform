@@ -1,32 +1,79 @@
-import { useRole } from '../../app/useRole';
+import { useMemo, useState } from 'react';
+import type { ApparelItem } from '../../api/types';
 import { ErrorMessage, Loading } from '../../shared/QueryState';
 import { useCatalog, useCategories } from '../catalog/useCatalog';
+import { AdminFilters } from './AdminFilters';
+import { EMPTY_ADMIN_FILTER, filterAdminItems, type AdminFilter } from './catalogFilter';
 import { CatalogRow } from './CatalogRow';
 import { CreateItemForm } from './CreateItemForm';
 
 export function AdminPage() {
-  const role = useRole();
   const catalog = useCatalog();
   const categories = useCategories();
+  const [filter, setFilter] = useState<AdminFilter>(EMPTY_ADMIN_FILTER);
+  const [adding, setAdding] = useState(false);
+  const [created, setCreated] = useState<ApparelItem | null>(null);
+
+  const items = useMemo(() => catalog.data ?? [], [catalog.data]);
+  const visible = useMemo(() => filterAdminItems(items, filter), [items, filter]);
 
   return (
     <div className="stack">
-      <h1>Панель адміністратора</h1>
-      {role !== 'admin' && (
-        <p className="alert alert--warning">
-          Оберіть роль «Адміністратор» у шапці. Без неї бекенд відхилить зміни (403).
+      <div className="row">
+        <h1 className="spacer">Панель адміністратора</h1>
+        {!adding && (
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => {
+              setAdding(true);
+              setCreated(null);
+            }}
+          >
+            <span aria-hidden="true">+</span> Додати товар
+          </button>
+        )}
+      </div>
+
+      {adding && (
+        <CreateItemForm
+          categories={categories.data ?? []}
+          items={items}
+          onCreated={(item) => {
+            setCreated(item);
+            setAdding(false);
+          }}
+          onCancel={() => setAdding(false)}
+        />
+      )}
+      {created && (
+        <p className="alert alert--success" role="status">
+          Додано «{created.title}» ({created.id}).
         </p>
       )}
 
-      <CreateItemForm categories={categories.data ?? []} />
+      <AdminFilters
+        filter={filter}
+        categories={categories.data ?? []}
+        items={items}
+        onChange={setFilter}
+      />
 
       <section className="card stack" aria-label="Каталог">
-        <h2>Каталог ({catalog.data?.length ?? 0})</h2>
+        <h2>
+          Каталог{' '}
+          <span className="muted small">
+            {visible.length === items.length ? items.length : `${visible.length} з ${items.length}`}
+          </span>
+        </h2>
         {catalog.isPending && <Loading />}
         {catalog.isError && (
           <ErrorMessage error={catalog.error} onRetry={() => void catalog.refetch()} />
         )}
-        {catalog.data && (
+        {catalog.isSuccess && visible.length === 0 && (
+          <p className="muted">За цими фільтрами товарів немає.</p>
+        )}
+        {visible.length > 0 && (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -40,7 +87,7 @@ export function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {catalog.data.map((item) => (
+                {visible.map((item) => (
                   <CatalogRow key={item.id} item={item} />
                 ))}
               </tbody>

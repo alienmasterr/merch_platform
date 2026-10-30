@@ -78,7 +78,7 @@ export function PrintCanvas({ baseItem, state, onSelect, onMove }: Props) {
         role="group"
         aria-label="Мокап виробу"
       >
-        <GarmentShape item={baseItem} />
+        <GarmentShape item={baseItem} view={view} />
 
         {placements.map((placement) => {
           const area = areaRect(placement);

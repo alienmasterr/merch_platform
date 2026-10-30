@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PaymentStatus, ValidationError, type IPaymentStrategy } from '@merch/contracts';
 import { createPaymentModule } from '../index';
 import { PaymentProcessor } from '../application/payment-processor';
-import { StubPaymentStrategy } from '../infrastructure/stub-payment-strategy';
+import { randomPaymentDelayMs, StubPaymentStrategy } from '../infrastructure/stub-payment-strategy';
 
 function fakeStrategy(name: string): IPaymentStrategy {
   return {
@@ -58,5 +58,55 @@ describe('StubPaymentStrategy', () => {
     expect(() => stub.parseNotification({ ...cb, signature: 'forged' })).toThrow(ValidationError);
     await stub.refund('o1', 100);
     expect(stub.refunds).toEqual([{ orderId: 'o1', amount: 100 }]);
+  });
+
+  describe('автопідтвердження оплати', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('після затримки шле підписаний callback "успішно" на webhook', async () => {
+      vi.useFakeTimers();
+      const http = { postForm: vi.fn().mockResolvedValue({ ok: true }) };
+      const stub = new StubPaymentStrategy('http://spa/result', {
+        webhookUrl: 'http://api/payments/webhook',
+        http,
+        delayMs: () => 3000,
+      });
+      stub.createInvoice(request);
+      await vi.advanceTimersByTimeAsync(2999);
+      expect(http.postForm).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(http.postForm).toHaveBeenCalledWith('http://api/payments/webhook', expect.any(Object));
+      const callback = vi.mocked(http.postForm).mock.calls[0]?.[1] as Record<string, string>;
+      expect(stub.parseNotification(callback)).toMatchObject({
+        orderId: 'o1',
+        status: PaymentStatus.SUCCESS,
+        amount: request.amount,
+      });
+    });
+
+    it('негатив: без autoConfirm callback не надсилається; збій callback лише логується', async () => {
+      vi.useFakeTimers();
+      const log = vi.fn();
+      const failing = { postForm: vi.fn().mockRejectedValue(new Error('down')) };
+      new StubPaymentStrategy('http://spa/result').createInvoice(request);
+      new StubPaymentStrategy('http://spa/result', {
+        webhookUrl: 'http://api/payments/webhook',
+        http: failing,
+        delayMs: () => 10,
+        log,
+      }).createInvoice(request);
+      await vi.advanceTimersByTimeAsync(10);
+      expect(failing.postForm).toHaveBeenCalledTimes(1);
+      expect(log).toHaveBeenCalledWith(expect.stringContaining('callback for order o1 failed'));
+    });
+
+    it('затримка за замовчуванням від 1 до 5 с', () => {
+      for (let i = 0; i < 200; i += 1) {
+        const ms = randomPaymentDelayMs();
+        expect(ms).toBeGreaterThanOrEqual(1000);
+        expect(ms).toBeLessThanOrEqual(5000);
+      }
+    });
   });
 });

@@ -1,10 +1,6 @@
 import { api, unwrap } from './client';
 import type { ApparelItem, CatalogFilter, Category } from './types';
 
-export function getHealth(): Promise<{ status: string }> {
-  return unwrap(api.GET('/health'));
-}
-
 export function listCategories(): Promise<Category[]> {
   return unwrap(api.GET('/catalog/categories'));
 }
