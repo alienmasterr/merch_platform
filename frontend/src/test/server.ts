@@ -104,7 +104,6 @@ export function buildCustomProduct(
 
 /** Обробники за замовчуванням. Окремі тести перевизначають їх через server.use(...). */
 export const defaultHandlers = [
-  http.get(apiUrl('/health'), () => HttpResponse.json({ status: 'ok' })),
   http.get(apiUrl('/catalog/categories'), () => HttpResponse.json(categories)),
   http.get(apiUrl('/catalog'), ({ request }) => {
     const inStockOnly = new URL(request.url).searchParams.get('inStockOnly') === 'true';
@@ -225,16 +224,6 @@ export const defaultHandlers = [
     return order
       ? HttpResponse.json({ ...order, warnings: [] })
       : notFound(`Order ${String(params.id)}`);
-  }),
-
-  /** Як бекенд: успішний callback → PAID → PENDING_REVIEW (підпис тут не перевіряємо). */
-  http.post(apiUrl('/payments/webhook'), async ({ request }) => {
-    const form = new URLSearchParams(await request.text());
-    const payload = JSON.parse(atob(form.get('data') ?? '')) as { order_id: string };
-    const order = orders.get(payload.order_id);
-    if (!order) return notFound(`Order ${payload.order_id}`);
-    orders.set(order.id, withStatus(order, 'PENDING_REVIEW', { paymentTransactionId: 'tx-1' }));
-    return HttpResponse.json({ ok: true });
   }),
 ];
 

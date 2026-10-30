@@ -29,7 +29,7 @@ test('customer orders custom merch and the manager ships it', async ({ page }) =
   await page.keyboard.press('ArrowUp');
   await expect(page.getByText('Зміщення по Y: -5 мм')).toBeVisible();
   await page.getByRole('button', { name: 'Зберегти дизайн' }).click();
-  await expect(page.getByText('Дизайн збережено. Ціну розраховано на сервері.')).toBeVisible();
+  await expect(page.getByText('Дизайн збережено.')).toBeVisible();
   const productTotal = (await page.getByTestId('saved-total').textContent()) ?? '';
 
   // 3. Кошик
@@ -50,11 +50,10 @@ test('customer orders custom merch and the manager ships it', async ({ page }) =
   const orderId = page.url().split('/').pop() ?? '';
   await expect(page.locator('[aria-current=step]')).toHaveText('Створено');
 
-  // 5. Оплата (dev-заглушка LiqPay + підписаний callback)
+  // 5. Оплата: заглушка LiqPay сама підтверджує платіж через 1–5 с
   await page.getByRole('button', { name: 'Оплатити через LiqPay' }).click();
   await expect(page).toHaveURL(new RegExp(`/payment-result\\?orderId=${orderId}`));
-  await page.getByRole('button', { name: 'Імітувати успішну оплату' }).click();
-  await expect(page.getByText(/Оплату .* отримано/)).toBeVisible();
+  await expect(page.getByText(/Оплату .* отримано/)).toBeVisible({ timeout: 15_000 });
 
   // 6. Менеджер: перевірка макета → друк → відправка
   await page.goto('/manager');
@@ -117,10 +116,12 @@ test('manager rejects a mockup and the order is cancelled', async ({ page, reque
     },
   });
   const { id: orderId } = (await order.json()) as { id: string };
+  // рахунок на оплату: заглушка LiqPay підтвердить його сама через 1–5 с
+  const invoice = await request.post(`http://localhost:3100/orders/${orderId}/checkout`);
+  const { checkoutUrl } = (await invoice.json()) as { checkoutUrl: string };
 
-  await page.goto(`/payment-result?orderId=${orderId}`);
-  await page.getByRole('button', { name: 'Імітувати успішну оплату' }).click();
-  await expect(page.getByText(/Оплату .* отримано/)).toBeVisible();
+  await page.goto(checkoutUrl);
+  await expect(page.getByText(/Оплату .* отримано/)).toBeVisible({ timeout: 15_000 });
 
   await page.goto('/manager');
   await setRole(page, 'manager');

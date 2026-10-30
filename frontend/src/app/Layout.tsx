@@ -1,9 +1,10 @@
 import { Link, NavLink, Outlet } from 'react-router';
 import { CartLink } from '../features/cart/CartLink';
-import { HealthIndicator } from './HealthIndicator';
 import { RoleSwitcher } from './RoleSwitcher';
+import { useRole } from './useRole';
 
 export function Layout() {
+  const role = useRole();
   return (
     <>
       <header className="app-header">
@@ -13,14 +14,13 @@ export function Layout() {
           </Link>
           <nav className="nav" aria-label="Головне меню">
             <NavLink to="/catalog">Каталог</NavLink>
-            <NavLink to="/customizer">Конструктор</NavLink>
             <CartLink />
-            <NavLink to="/manager">Менеджер</NavLink>
-            <NavLink to="/admin">Адмін</NavLink>
+            {/* службові розділи видно лише відповідній ролі */}
+            {role === 'manager' && <NavLink to="/manager">Менеджер</NavLink>}
+            {role === 'admin' && <NavLink to="/admin">Адмін</NavLink>}
           </nav>
           <div className="header-tools">
             <RoleSwitcher />
-            <HealthIndicator />
           </div>
         </div>
       </header>

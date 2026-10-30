@@ -1,3 +1,5 @@
+export const FORBIDDEN_MESSAGE = 'Недостатньо прав для цієї дії (оберіть роль у шапці).';
+
 /** Помилка API у єдиному форматі. Бекенд повертає `{ error: CODE, message, details? }`. */
 export class ApiError extends Error {
   readonly status: number;
@@ -45,7 +47,7 @@ interface ZodIssue {
 export function describeError(error: unknown): string {
   if (!(error instanceof ApiError))
     return error instanceof Error ? error.message : 'Невідома помилка';
-  if (error.code === 'FORBIDDEN') return 'Недостатньо прав для цієї дії (оберіть роль у шапці).';
+  if (error.code === 'FORBIDDEN') return FORBIDDEN_MESSAGE;
   if (Array.isArray(error.details) && error.details.length > 0) {
     const issues = (error.details as ZodIssue[])
       .map((i) => [i.path?.join('.'), i.message].filter(Boolean).join(': '))

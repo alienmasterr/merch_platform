@@ -5,25 +5,28 @@ import { calculatePosition, viewOf } from './placement';
 
 /**
  * Статичний мокап збереженого виробу (кошик, замовлення, менеджер).
- * Показує вид спереду, або ззаду, якщо всі принти на спині.
+ * Без `view` показує вид спереду, або ззаду, якщо всі принти на спині.
  */
 export function ProductMockup({
   product,
   className = 'mockup',
+  view: forcedView,
 }: {
   product: CustomProduct;
   className?: string;
+  view?: 'front' | 'back';
 }) {
-  const view = product.prints.every((p) => viewOf(p.placement) === 'back') ? 'back' : 'front';
+  const view =
+    forcedView ?? (product.prints.every((p) => viewOf(p.placement) === 'back') ? 'back' : 'front');
   const visible = product.prints.filter((p) => viewOf(p.placement) === view);
   return (
     <svg
       viewBox={`0 0 ${CANVAS.width} ${CANVAS.height}`}
       className={className}
       role="img"
-      aria-label={`Мокап: ${product.baseItem.title}`}
+      aria-label={`Мокап: ${product.baseItem.title}, ${view === 'back' ? 'ззаду' : 'спереду'}`}
     >
-      <GarmentShape item={product.baseItem} />
+      <GarmentShape item={product.baseItem} view={view} />
       {visible.map((p) => (
         <image
           key={p.placement}

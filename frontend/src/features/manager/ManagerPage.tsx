@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { listOrdersByStatus } from '../../api/manager';
 import type { OrderActionResult } from '../../api/types';
-import { useRole } from '../../app/useRole';
 import { STATUS_LABELS } from '../../shared/labels';
 import { ErrorMessage, Loading } from '../../shared/QueryState';
 import { ActionNotice } from './ActionNotice';
@@ -12,7 +11,6 @@ import { managerOrdersKey, ORDER_STATUSES } from './managerActions';
 import { ManagerOrderCard } from './ManagerOrderCard';
 
 export function ManagerPage() {
-  const role = useRole();
   const [params, setParams] = useSearchParams();
   const raw = params.get('status');
   const status: OrderStatus = ORDER_STATUSES.includes(raw as OrderStatus)
@@ -23,9 +21,8 @@ export function ManagerPage() {
   const pushResult = (r: OrderActionResult) =>
     setResults((prev) => [r, ...prev.filter((x) => x.id !== r.id)].slice(0, 5));
 
-  // запит іде завжди: роль перевіряє бекенд, без ролі менеджера він поверне 403
   const orders = useQuery({
-    queryKey: [...managerOrdersKey(status), role],
+    queryKey: managerOrdersKey(status),
     queryFn: () => listOrdersByStatus(status),
     refetchInterval: 10_000,
   });
@@ -33,11 +30,6 @@ export function ManagerPage() {
   return (
     <div className="stack">
       <h1>Панель менеджера</h1>
-      {role !== 'manager' && (
-        <p className="alert alert--warning">
-          Оберіть роль «Менеджер» у шапці, щоб працювати із замовленнями.
-        </p>
-      )}
 
       <div className="tabs" role="tablist" aria-label="Статус замовлень">
         {ORDER_STATUSES.map((s) => (

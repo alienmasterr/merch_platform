@@ -5,6 +5,7 @@ import type { ApparelItem, Category } from '../../api/types';
 import { KIND_LABELS } from '../../shared/labels';
 import { ErrorMessage } from '../../shared/QueryState';
 import { catalogKeys } from '../catalog/useCatalog';
+import { categoriesForKind } from './catalogFilter';
 import {
   buildCreateRequest,
   EMPTY_ITEM_FORM,
@@ -12,28 +13,52 @@ import {
   type ItemFormErrors,
 } from './itemForm';
 
-/** Форма створення базового виробу (POST /admin/catalog). Поля залежать від типу виробу. */
-export function CreateItemForm({ categories }: { categories: Category[] }) {
+interface Props {
+  categories: Category[];
+  /** Наявні товари: з них видно, які категорії відповідають якому типу. */
+  items: ApparelItem[];
+  onCreated: (item: ApparelItem) => void;
+  onCancel: () => void;
+}
+
+/**
+ * Форма створення базового виробу (POST /admin/catalog). Поля й список категорій
+ * залежать від типу: для верхнього одягу не можна обрати «Аксесуари» тощо.
+ */
+export function CreateItemForm({ categories, items, onCreated, onCancel }: Props) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState<ItemForm>(EMPTY_ITEM_FORM);
+  const allowedFor = (kind: ItemForm['kind']) => categoriesForKind(kind, categories, items);
+  // якщо для типу лише одна категорія, одразу обираємо її
+  const defaultCategory = (kind: ItemForm['kind']) => {
+    const allowed = allowedFor(kind);
+    return allowed.length === 1 ? (allowed[0]?.id ?? '') : '';
+  };
+  const [form, setForm] = useState<ItemForm>(() => ({
+    ...EMPTY_ITEM_FORM,
+    categoryId: defaultCategory(EMPTY_ITEM_FORM.kind),
+  }));
   const [errors, setErrors] = useState<ItemFormErrors>({});
-  const [created, setCreated] = useState<ApparelItem | null>(null);
+  const allowedCategories = allowedFor(form.kind);
 
   const create = useMutation({
     mutationFn: createCatalogItem,
     onSuccess: (item) => {
-      setCreated(item);
-      setForm({ ...EMPTY_ITEM_FORM, kind: form.kind, categoryId: form.categoryId });
       void queryClient.invalidateQueries({ queryKey: catalogKeys.all });
+      onCreated(item);
     },
   });
 
   const set = <K extends keyof ItemForm>(key: K, value: ItemForm[K]) =>
     setForm({ ...form, [key]: value });
 
+  const changeKind = (kind: ItemForm['kind']) => {
+    const stillAllowed = allowedFor(kind).some((c) => c.id === form.categoryId);
+    setForm({ ...form, kind, categoryId: stillAllowed ? form.categoryId : defaultCategory(kind) });
+    setErrors({});
+  };
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setCreated(null);
     const result = buildCreateRequest(form);
     if (!result.ok) {
       setErrors(result.errors);
@@ -68,7 +93,7 @@ export function CreateItemForm({ categories }: { categories: Category[] }) {
           <select
             id="item-kind"
             value={form.kind}
-            onChange={(e) => set('kind', e.target.value as ItemForm['kind'])}
+            onChange={(e) => changeKind(e.target.value as ItemForm['kind'])}
           >
             {(Object.keys(KIND_LABELS) as ItemForm['kind'][]).map((k) => (
               <option key={k} value={k}>
@@ -85,7 +110,7 @@ export function CreateItemForm({ categories }: { categories: Category[] }) {
             onChange={(e) => set('categoryId', e.target.value)}
           >
             <option value="">—</option>
-            {categories.map((c) => (
+            {allowedCategories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
@@ -139,14 +164,12 @@ export function CreateItemForm({ categories }: { categories: Category[] }) {
       </div>
 
       {create.isError && <ErrorMessage error={create.error} />}
-      {created && (
-        <p className="alert alert--success" role="status">
-          Додано «{created.title}» ({created.id}).
-        </p>
-      )}
-      <div>
+      <div className="row">
         <button type="submit" className="btn btn--primary" disabled={create.isPending}>
-          {create.isPending ? 'Створюємо…' : 'Додати товар'}
+          {create.isPending ? 'Зберігаємо…' : 'Зберегти товар'}
+        </button>
+        <button type="button" className="btn" onClick={onCancel}>
+          Скасувати
         </button>
       </div>
     </form>

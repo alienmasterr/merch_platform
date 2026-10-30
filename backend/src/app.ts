@@ -57,6 +57,13 @@ export function createApp(deps: AppDependencies) {
   const notification = createNotificationModule({
     sender: deps.notificationSender,
     orderProvider: (orderId) => order.service.getOrder(orderId),
+    describeItem: async (customProductId) => {
+      const product = await deps.productRepo.findById(customProductId);
+      if (!product) return null;
+      const base = product.getBaseItem();
+      return `${base.getTitle()}, ${base.getColor()}, ${base.getSize()}`;
+    },
+    ...(deps.appUrl && { orderUrl: (orderId: string) => `${deps.appUrl}/orders/${orderId}` }),
   });
 
   // порядок важливий: спершу доставка (дописує ТТН), потім лист клієнту з цим номером

@@ -46,6 +46,8 @@ export interface AppDependencies {
   /** Якщо задано, Express віддає цю папку на /files (локальне сховище). */
   localUploadsDir?: string;
   corsOrigin: string;
+  /** Публічна адреса SPA: посилання на замовлення в листах. Без неї кнопки в листах немає. */
+  appUrl?: string;
 }
 
 export interface Container {
@@ -121,7 +123,12 @@ export async function buildContainer(config: AppConfig): Promise<Container> {
           resultUrl: config.PAYMENT_RESULT_URL,
           serverUrl: `${config.PUBLIC_BASE_URL}/payments/webhook`,
         })
-      : new StubPaymentStrategy(config.PAYMENT_RESULT_URL);
+      : new StubPaymentStrategy(
+          config.PAYMENT_RESULT_URL,
+          config.STUB_PAYMENT_AUTO_CONFIRM
+            ? { webhookUrl: `${config.PUBLIC_BASE_URL}/payments/webhook`, http: new FetchFormHttpClient() }
+            : undefined,
+        );
 
   const notificationSender: INotificationSender = config.SMTP_HOST
     ? new SmtpNotificationSender(
@@ -152,6 +159,7 @@ export async function buildContainer(config: AppConfig): Promise<Container> {
       },
       ...(localUploadsDir && { localUploadsDir }),
       corsOrigin: config.CORS_ORIGIN,
+      appUrl: config.APP_PUBLIC_URL.replace(/\/$/, ''),
     },
   };
 }

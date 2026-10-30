@@ -1,12 +1,11 @@
 import type { PrintPlacement } from '@merch/contracts';
-import { Link, useSearchParams } from 'react-router';
+import { Link, Navigate, useSearchParams } from 'react-router';
 import { ApiError } from '../../api/errors';
 import type { ApparelItem } from '../../api/types';
 import { colorLabel, formatMoney } from '../../shared/format';
-import { GarmentThumb } from '../../shared/Garment';
 import { PLACEMENT_LABELS } from '../../shared/labels';
 import { ErrorMessage, Loading } from '../../shared/QueryState';
-import { useCatalog, useCatalogItem } from '../catalog/useCatalog';
+import { useCatalogItem } from '../catalog/useCatalog';
 import { PrintCanvas } from './PrintCanvas';
 import { PrintControls } from './PrintControls';
 import { AddToCart } from './AddToCart';
@@ -18,14 +17,15 @@ export function CustomizerPage() {
   const baseItemId = params.get('baseItemId') ?? undefined;
   const item = useCatalogItem(baseItemId);
 
-  if (!baseItemId) return <BaseItemPicker />;
+  // конструктор відкривається зі сторінки товару; без виробу ведемо до каталогу
+  if (!baseItemId) return <Navigate to="/catalog" replace />;
   if (item.isPending) return <Loading />;
   if (item.isError) {
     if (item.error instanceof ApiError && item.error.status === 404) {
       return (
         <div className="card stack">
           <h1>Виріб не знайдено</h1>
-          <Link to="/customizer">Обрати інший виріб</Link>
+          <Link to="/catalog">Обрати інший виріб</Link>
         </div>
       );
     }
@@ -38,45 +38,12 @@ export function CustomizerPage() {
         <p className="alert alert--warning">
           Цього виробу немає в наявності, його не можна кастомізувати.
         </p>
-        <Link to="/customizer">Обрати інший виріб</Link>
+        <Link to="/catalog">Обрати інший виріб</Link>
       </div>
     );
   }
   // key: новий виріб = новий стан конструктора
   return <Customizer key={item.data.id} baseItem={item.data} />;
-}
-
-function BaseItemPicker() {
-  const catalog = useCatalog({ inStockOnly: true });
-  return (
-    <div className="stack">
-      <h1>Конструктор</h1>
-      <p className="muted">Оберіть базовий виріб, на який нанесемо ваш принт.</p>
-      {catalog.isPending && <Loading />}
-      {catalog.isError && (
-        <ErrorMessage error={catalog.error} onRetry={() => void catalog.refetch()} />
-      )}
-      <div className="product-grid">
-        {catalog.data?.map((i) => (
-          <Link
-            key={i.id}
-            to={`/customizer?baseItemId=${encodeURIComponent(i.id)}`}
-            className="card product-card"
-          >
-            <div className="product-card__image">
-              <GarmentThumb item={i} label={i.title} />
-            </div>
-            <div className="stack product-card__body">
-              <strong>{i.title}</strong>
-              <span className="small muted">
-                {colorLabel(i.color)}, {i.size} · {formatMoney(i.basePrice)}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 function Customizer({ baseItem }: { baseItem: ApparelItem }) {

@@ -16,14 +16,9 @@ vi.mock('./printFile', async (importOriginal) => ({
 const png = () => new File([new Uint8Array(1024)], 'logo.png', { type: 'image/png' });
 
 describe('CustomizerPage', () => {
-  it('asks to pick a base item when none is given', async () => {
-    renderApp('/customizer');
-    expect(
-      await screen.findByText('Оберіть базовий виріб, на який нанесемо ваш принт.'),
-    ).toBeInTheDocument();
-    // лише товари в наявності (худі у фікстурах відсутнє)
-    expect(await screen.findAllByRole('link', { name: /Футболка базова|Чашка/ })).toHaveLength(3);
-    expect(screen.queryByText(/Худі оверсайз/)).not.toBeInTheDocument();
+  it('redirects to the catalog when no base item is given', async () => {
+    const { router } = renderApp('/customizer');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/catalog'));
   });
 
   it('shows the allowed placements of the item', async () => {
@@ -55,9 +50,7 @@ describe('CustomizerPage', () => {
     expect(screen.getByText('Зміщення по X: 5 мм')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Зберегти дизайн' }));
-    expect(
-      await screen.findByText('Дизайн збережено. Ціну розраховано на сервері.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Дизайн збережено.')).toBeInTheDocument();
     // 350 + 30 підготовки + 18×18 см × 0.25 грн (DTG) = 461
     expect(screen.getByTestId('saved-total')).toHaveTextContent('461');
 

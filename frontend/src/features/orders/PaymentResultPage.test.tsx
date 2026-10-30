@@ -12,20 +12,21 @@ const recipient = {
 };
 
 describe('PaymentResultPage', () => {
-  it('waits for the webhook and confirms payment via the dev callback', async () => {
-    orders.set(
-      'order-1',
-      buildOrder('order-1', { items: [{ customProductId: 'cp-x', quantity: 1 }], recipient }),
-    );
-    const { user } = renderApp('/payment-result?orderId=order-1');
+  it('waits for the payment webhook and then confirms the payment', async () => {
+    const order = buildOrder('order-1', {
+      items: [{ customProductId: 'cp-x', quantity: 1 }],
+      recipient,
+    });
+    orders.set(order.id, order);
+    renderApp('/payment-result?orderId=order-1');
     expect(await screen.findByText(/Очікуємо підтвердження оплати/)).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Імітувати успішну оплату' }));
-    // сторінка опитує замовлення кожні 2 с
+    // як бекенд після callback від платіжки (заглушка шле його через 1–5 с)
+    setTimeout(() => orders.set(order.id, withStatus(order, 'PENDING_REVIEW')), 1500);
     expect(
       await screen.findByText(/Оплату .* отримано/, {}, { timeout: 4000 }),
     ).toBeInTheDocument();
-    expect(orders.get('order-1')?.status).toBe('PENDING_REVIEW');
   });
 
   it('shows success right away for a paid order', async () => {
@@ -36,9 +37,16 @@ describe('PaymentResultPage', () => {
     orders.set(order.id, withStatus(order, 'PENDING_REVIEW'));
     renderApp('/payment-result?orderId=order-2');
     expect(await screen.findByText(/Чек надіслано на t@x.ua/)).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Імітувати успішну оплату' }),
-    ).not.toBeInTheDocument();
+  });
+
+  it('shows a cancelled order', async () => {
+    const order = buildOrder('order-3', {
+      items: [{ customProductId: 'cp-x', quantity: 1 }],
+      recipient,
+    });
+    orders.set(order.id, withStatus(order, 'CANCELLED'));
+    renderApp('/payment-result?orderId=order-3');
+    expect(await screen.findByText('Замовлення скасовано.')).toBeInTheDocument();
   });
 
   it('handles a missing order id', async () => {

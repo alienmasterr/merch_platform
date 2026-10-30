@@ -8,6 +8,32 @@ import { SmtpNotificationSender } from '../infrastructure/smtp-notification-send
 import { makeOrderData } from '../../../test-utils/order-fixtures';
 
 describe('NotificationService', () => {
+  it('чек називає вироби через describeItem; збій опису не блокує лист', async () => {
+    const sent: { text: string }[] = [];
+    const sender = { send: async (m: { text: string }) => void sent.push(m) };
+    const named = new NotificationService(sender, { describeItem: async () => 'Футболка базова, white, M' });
+    await named.sendReceipt(makeOrderData());
+    expect(sent[0]?.text).toContain('1. Футболка базова, white, M × 2');
+
+    const broken = new NotificationService(sender, { describeItem: async () => Promise.reject(new Error('db down')) });
+    await broken.sendReceipt(makeOrderData());
+    expect(sent[1]?.text).toContain('1. Виріб p1 × 2');
+  });
+
+  it('листи мають HTML-версію і кнопку на сторінку замовлення, якщо задано orderUrl', async () => {
+    const sent: { text: string; html?: string }[] = [];
+    const sender = { send: async (m: { text: string; html?: string }) => void sent.push(m) };
+    const service = new NotificationService(sender, { orderUrl: (id) => `http://spa/orders/${id}` });
+    await service.sendReceipt(makeOrderData());
+    await service.notifyOrderStatus(makeOrderData({ status: OrderStatus.PRINTING }));
+    for (const m of sent) {
+      expect(m.html).toContain('href="http://spa/orders/order-1"');
+      expect(m.text).toContain('Замовлення: http://spa/orders/order-1');
+    }
+    await new NotificationService(sender).sendReceipt(makeOrderData());
+    expect(sent[2]?.html).not.toContain('Переглянути замовлення');
+  });
+
   it('sendReceipt і notifyOrderStatus надсилають відповідні листи', async () => {
     const sender = new InMemoryNotificationSender();
     const service = new NotificationService(sender);

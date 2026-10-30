@@ -10,6 +10,7 @@ import { OrderPage } from '../features/orders/OrderPage';
 import { PaymentResultPage } from '../features/orders/PaymentResultPage';
 import { Layout } from './Layout';
 import { NotFoundPage } from './NotFoundPage';
+import { RoleGate } from './RoleGate';
 
 export const routes: RouteObject[] = [
   {
@@ -24,8 +25,22 @@ export const routes: RouteObject[] = [
       { path: 'checkout', element: <CheckoutPage /> },
       { path: 'orders/:id', element: <OrderPage /> },
       { path: 'payment-result', element: <PaymentResultPage /> },
-      { path: 'manager', element: <ManagerPage /> },
-      { path: 'admin', element: <AdminPage /> },
+      {
+        path: 'manager',
+        element: (
+          <RoleGate role="manager" title="Панель менеджера">
+            <ManagerPage />
+          </RoleGate>
+        ),
+      },
+      {
+        path: 'admin',
+        element: (
+          <RoleGate role="admin" title="Панель адміністратора">
+            <AdminPage />
+          </RoleGate>
+        ),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -63,7 +63,7 @@ SOLID: кожен сервіс має одну відповідальність;
 git clone <url> && cd merch-platform
 npm install
 cp .env.example .env
-docker compose up -d postgres
+docker compose up -d postgres mailpit   # БД і локальна пошта (листи: http://localhost:8025)
 npm run migrate -w backend        # застосувати міграції
 npm run seed -w backend           # стартові дані каталогу
 npm run dev:backend               # http://localhost:3000/health
@@ -84,8 +84,10 @@ npm run dev:frontend              # http://localhost:5173 (в окремому �
 | `STORAGE_DRIVER`      | `local` (за замовчуванням) / `s3` / `memory` | `local` зберігає файли в `.data/uploads` і віддає їх на `/files` |
 | `NOVA_POSHTA_API_KEY` | ключ або порожньо                            | без ключа працює заглушка (доставка 70 грн, ТТН `DEV-…`)         |
 | `LIQPAY_PUBLIC_KEY`, `LIQPAY_PRIVATE_KEY` | ключі або порожньо           | без ключів dev-заглушка оплати: "оплата" одразу веде на `PAYMENT_RESULT_URL`, повернення коштів лише логуються |
+| `APP_PUBLIC_URL` | `http://localhost:5173` (за замовчуванням) | адреса SPA для кнопки «Переглянути замовлення» в листах |
+| `STUB_PAYMENT_AUTO_CONFIRM` | `true` (за замовчуванням) / `false` | заглушка сама підтверджує оплату через 1–5 с: шле підписаний callback на `/payments/webhook`, як LiqPay |
 | `LIQPAY_SANDBOX`      | `true` (за замовчуванням) / `false`          | тестові платежі LiqPay; у `false` статус `sandbox` не вважається оплатою |
-| `SMTP_HOST` (+ `SMTP_*`, `MAIL_FROM`) | хост або порожньо            | без SMTP листи клієнтам друкуються в консоль                      |
+| `SMTP_HOST` (+ `SMTP_*`, `MAIL_FROM`) | хост або порожньо            | без SMTP листи клієнтам друкуються в консоль. Локально: `SMTP_HOST=localhost`, `SMTP_PORT=1025` (контейнер `mailpit`), усі листи у веб-інтерфейсі http://localhost:8025 |
 
 ## Тестування
 
@@ -123,7 +125,7 @@ React 19 SPA: Vite, TypeScript (strict), React Router, TanStack Query, openapi-f
 - У розробці SPA шле запити на `/api/*`, Vite проксює їх на `http://localhost:3000` (CORS не потрібен). Інша адреса бекенду: змінна `BACKEND_URL` під час запуску `dev`.
 - Усі запити йдуть лише через `frontend/src/api/`. Типи згенеровані з OpenAPI; після змін у `packages/contracts/openapi.yaml` виконайте `npm run gen:api -w frontend`.
 - **Роль** обирається в шапці («Покупець / Менеджер / Адміністратор») і передається бекенду в заголовку `x-user-role` (тимчасово, як і на бекенді). Права перевіряє бекенд: без потрібної ролі сторінки менеджера й адміна покажуть 403.
-- **Оплата без ключів LiqPay**: у режимі розробки на `/payment-result` є кнопка «Імітувати успішну оплату». Вона надсилає бекенду підписаний callback dev-заглушки (замість команди `tsx` + `curl` нижче). У production-збірку кнопка не потрапляє.
+- **Оплата без ключів LiqPay**: покупець потрапляє на `/payment-result`, а заглушка платіжки сама підтверджує оплату через 1–5 с (callback на webhook бекенду). Сторінка опитує статус щосекунди й показує «Оплату отримано», а чек приходить на email (локально в Mailpit).
 - Межі зон друку, тарифи, правила файлів і отримувача продубльовані з бекенду для миттєвої перевірки на клієнті (у коді є посилання на файли-джерела). Остаточно все перевіряє й рахує бекенд.
 
 ### Скрипти (`npm run <script> -w frontend`)
@@ -175,7 +177,7 @@ CREATED ──оплата (webhook)──▶ PAID ──▶ PENDING_REVIEW ─�
 
 Спостерігачі `Order` підключені в `app.ts`: `NovaPoshtaDeliveryObserver` на `SHIPPED` створює ТТН і зберігає її в замовленні, `EmailNotificationObserver` надсилає чек на `PAID` і листи на `PRINTING`, `SHIPPED`, `CANCELLED`. Помилка спостерігача не відкочує статус: вона приходить менеджеру в `warnings`, а дію можна повторити через `/notify`.
 
-Перевірити оплату локально без ключів LiqPay можна підписаним callback dev-заглушки:
+Без ключів LiqPay оплата підтверджується автоматично (`STUB_PAYMENT_AUTO_CONFIRM=true`). Якщо автопідтвердження вимкнене, callback можна надіслати вручну:
 
 ```bash
 npx tsx -e "import { StubPaymentStrategy as S } from './backend/src/modules/payment/infrastructure/stub-payment-strategy.ts'; console.log(new URLSearchParams(S.successCallback('<orderId>', <total>)).toString())" \

@@ -12,6 +12,8 @@ const schema = z
     /** local: файли в .data/uploads, s3: S3-сумісне сховище, memory: лише для тестів. */
     STORAGE_DRIVER: z.enum(['local', 's3', 'memory']).default('local'),
     PUBLIC_BASE_URL: z.string().default('http://localhost:3000'),
+    /** Адреса SPA для посилань у листах (сторінка замовлення). */
+    APP_PUBLIC_URL: z.string().default('http://localhost:5173'),
     UPLOADS_DIR: z.string().default(join(REPO_ROOT, '.data', 'uploads')),
     CORS_ORIGIN: z.string().default('http://localhost:5173'),
 
@@ -35,6 +37,8 @@ const schema = z
     LIQPAY_SANDBOX: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
     /** Сторінка SPA, куди повертається клієнт після оплати. */
     PAYMENT_RESULT_URL: z.string().default('http://localhost:5173/payment-result'),
+    /** Заглушка оплати сама підтверджує платіж через 1–5 с (callback на /payments/webhook). */
+    STUB_PAYMENT_AUTO_CONFIRM: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
 
     /** Без SMTP_HOST листи друкуються в консоль. */
     SMTP_HOST: z.string().optional(),

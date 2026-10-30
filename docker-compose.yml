@@ -18,6 +18,11 @@ services:
       ports: ["9000:9000", "9001:9001"]
       volumes: [miniodata:/data]
 
+  # Локальна пошта: приймає SMTP на 1025, усі листи видно у веб-інтерфейсі http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    ports: ["1025:1025", "8025:8025"]
+
 volumes:
   pgdata:
   miniodata:

@@ -1,19 +1,21 @@
-import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { simulateSuccessfulPayment } from '../../api/devPayment';
-import type { Order } from '../../api/types';
 import { formatMoney } from '../../shared/format';
 import { ErrorMessage, Loading } from '../../shared/QueryState';
 import { useOrder } from './useOrder';
 
+/** Після цього часу без підтвердження підказуємо, що робити далі. */
+const SLOW_PAYMENT_MS = 30_000;
+
 /**
- * Сюди LiqPay (або dev-заглушка) повертає покупця після оплати. Факт оплати підтверджує
- * лише webhook на бекенді, тож тут опитуємо статус, доки замовлення не вийде з CREATED.
+ * Сюди LiqPay повертає покупця після оплати. Факт оплати підтверджує лише webhook на бекенді
+ * (зазвичай за кілька секунд), тож опитуємо статус щосекунди, доки замовлення не вийде з CREATED.
  */
 export function PaymentResultPage() {
   const [params] = useSearchParams();
   const orderId = params.get('orderId') ?? undefined;
-  const order = useOrder(orderId, 2000);
+  const order = useOrder(orderId, 1000);
+  const slow = useElapsed(SLOW_PAYMENT_MS);
 
   if (!orderId) {
     return (
@@ -39,8 +41,12 @@ export function PaymentResultPage() {
             LiqPay…
           </p>
           <p className="small muted">Сторінка оновиться сама. Зазвичай це займає кілька секунд.</p>
-          {/* у production-збірці цей блок і код підпису вирізаються */}
-          {import.meta.env.DEV && <DevPaymentPanel order={o} />}
+          {slow && (
+            <p className="alert alert--warning small">
+              Підтвердження ще не надійшло. Якщо ви не завершили оплату, поверніться до замовлення й
+              оплатіть його ще раз.
+            </p>
+          )}
         </>
       )}
       {o.status === 'CANCELLED' && <p className="alert alert--error">Замовлення скасовано.</p>}
@@ -56,27 +62,12 @@ export function PaymentResultPage() {
   );
 }
 
-/** Лише в режимі розробки: бекенд без ключів LiqPay чекає підписаний callback, його й імітуємо. */
-function DevPaymentPanel({ order }: { order: Order }) {
-  const pay = useMutation({ mutationFn: () => simulateSuccessfulPayment(order.id, order.total) });
-  return (
-    <div className="alert alert--warning stack">
-      <strong>Режим розробки</strong>
-      <span className="small">
-        LiqPay не підключено (бекенд працює із заглушкою). Натисніть, щоб надіслати бекенду
-        підписаний callback «оплата успішна», як це зробив би LiqPay.
-      </span>
-      <div>
-        <button
-          type="button"
-          className="btn btn--small"
-          disabled={pay.isPending || pay.isSuccess}
-          onClick={() => pay.mutate()}
-        >
-          {pay.isSuccess ? 'Callback надіслано' : 'Імітувати успішну оплату'}
-        </button>
-      </div>
-      {pay.isError && <ErrorMessage error={pay.error} />}
-    </div>
-  );
+/** true, коли з моменту відкриття сторінки минуло `ms`. */
+function useElapsed(ms: number): boolean {
+  const [elapsed, setElapsed] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setElapsed(true), ms);
+    return () => clearTimeout(timer);
+  }, [ms]);
+  return elapsed;
 }
