@@ -1,4 +1,3 @@
-/** Обмеження з API (POST /orders): до 20 позицій, кількість 1..100. */
 export const MAX_CART_LINES = 20;
 export const MAX_QUANTITY = 100;
 export const CART_STORAGE_KEY = 'merch.cart.v1';
@@ -13,12 +12,10 @@ export type CartAction =
   | { type: 'setQuantity'; customProductId: string; quantity: number }
   | { type: 'remove'; customProductId: string }
   | { type: 'clear' }
-  /** Повна заміна (зміни з іншої вкладки). */
   | { type: 'replace'; lines: CartLine[] };
 
 const clampQuantity = (q: number) => Math.min(MAX_QUANTITY, Math.max(1, Math.round(q) || 1));
 
-/** Чистий редюсер кошика. Той самий виріб не дублюється, а збільшує кількість. */
 export function cartReducer(lines: CartLine[], action: CartAction): CartLine[] {
   switch (action.type) {
     case 'add': {
@@ -55,13 +52,11 @@ export function countItems(lines: CartLine[]): number {
   return lines.reduce((sum, l) => sum + l.quantity, 0);
 }
 
-/** Сума кошика за цінами з бекенду; позиції без відомої ціни пропускаються. */
 export function cartTotal(lines: CartLine[], prices: Record<string, number | undefined>): number {
   const total = lines.reduce((sum, l) => sum + (prices[l.customProductId] ?? 0) * l.quantity, 0);
   return Math.round(total * 100) / 100;
 }
 
-/** Читає кошик з localStorage, відкидаючи пошкоджені записи. */
 export function loadCart(
   storage: Pick<Storage, 'getItem'> | undefined = globalThis.localStorage,
 ): CartLine[] {
@@ -90,6 +85,5 @@ export function saveCart(
   try {
     storage?.setItem(CART_STORAGE_KEY, JSON.stringify(lines));
   } catch {
-    // приватний режим або переповнене сховище: кошик просто не переживе перезавантаження
   }
 }

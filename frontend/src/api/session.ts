@@ -1,7 +1,3 @@
-/**
- * ТИМЧАСОВА роль користувача (як і на бекенді, де роль береться із заголовка x-user-role).
- * Перемикач у шапці лише для розробки; справжня автентифікація замінить цей модуль.
- */
 export type Role = 'customer' | 'manager' | 'admin';
 
 const KEY = 'merch.role';
@@ -27,7 +23,6 @@ export function setRole(role: Role): void {
   try {
     localStorage.setItem(KEY, role);
   } catch {
-    // не критично
   }
   listeners.forEach((l) => l());
 }
@@ -37,7 +32,6 @@ export function subscribeRole(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
-/** Заголовок для запиту: покупець його не надсилає. */
 export function roleHeader(role: Role = current): Record<string, string> {
   return role === 'customer' ? {} : { 'x-user-role': role };
 }

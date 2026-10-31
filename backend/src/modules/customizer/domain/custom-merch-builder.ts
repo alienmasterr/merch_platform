@@ -17,10 +17,6 @@ export interface CustomMerchBuilderDeps {
   idGenerator?: () => string;
 }
 
-/**
- * Builder: збирає CustomMerchProduct крок за кроком.
- * Екземпляр стану не потокобезпечний, тому на кожен запит створюється новий білдер (див. CustomizerService).
- */
 export class CustomMerchBuilder implements IMerchBuilder {
   private readonly storage: IStorageService;
   private readonly renderer: IPreviewRenderer;
@@ -47,7 +43,6 @@ export class CustomMerchBuilder implements IMerchBuilder {
 
   setBaseItem(item: MerchApparelItem): void {
     this.baseItem = item;
-    // зміна базового виробу робить попередні принти й прев'ю недійсними
     this.prints = [];
     this.previewUrl = null;
   }
@@ -78,7 +73,6 @@ export class CustomMerchBuilder implements IMerchBuilder {
     return url;
   }
 
-  /** Повертає готовий продукт і скидає білдер, щоб його можна було використати повторно. */
   getResult(): ICustomMerchProduct {
     const base = this.requireBaseItem();
     if (this.prints.length === 0) {

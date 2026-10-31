@@ -6,7 +6,6 @@ export function getFileExtension(fileName: string): string {
   return dot < 0 ? '' : fileName.slice(dot + 1).toLowerCase();
 }
 
-/** Растрові (png/jpg/webp) та векторні (svg) принти, до 20 МБ. */
 export function isAllowedPrintFile(extension: string, sizeBytes: number): boolean {
   const ext = extension.replace(/^\./, '').toLowerCase();
   const formatOk = (ALLOWED_PRINT_EXTENSIONS as readonly string[]).includes(ext);

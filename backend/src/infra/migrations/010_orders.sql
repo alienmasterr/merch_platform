@@ -12,7 +12,6 @@ CREATE TABLE orders (
 
 CREATE INDEX idx_orders_status ON orders (status, created_at);
 
--- Позиції незмінні після створення замовлення; ціна зафіксована на той момент.
 CREATE TABLE order_items (
   order_id          TEXT NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
   position          INTEGER NOT NULL,

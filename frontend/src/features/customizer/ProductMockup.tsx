@@ -3,10 +3,6 @@ import { CANVAS } from '../../shared/canvas';
 import { GarmentShape } from '../../shared/Garment';
 import { calculatePosition, viewOf } from './placement';
 
-/**
- * Статичний мокап збереженого виробу (кошик, замовлення, менеджер).
- * Без `view` показує вид спереду, або ззаду, якщо всі принти на спині.
- */
 export function ProductMockup({
   product,
   className = 'mockup',

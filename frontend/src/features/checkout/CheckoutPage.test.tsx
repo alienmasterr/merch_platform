@@ -71,8 +71,7 @@ describe('CheckoutPage', () => {
     const { user } = renderApp('/checkout');
     await user.type(await screen.findByLabelText('Місто'), 'Львів');
     await waitFor(() => expect(screen.getByTestId('shipping-cost')).toHaveTextContent('85'));
-    expect(decodeURIComponent(query)).toBe('?city=Львів&weightKg=1'); // 2 вироби × 0,5 кг
-    // 2 × 405 + 85
+    expect(decodeURIComponent(query)).toBe('?city=Львів&weightKg=1');
     expect(screen.getByTestId('checkout-total')).toHaveTextContent(/895/);
   });
 

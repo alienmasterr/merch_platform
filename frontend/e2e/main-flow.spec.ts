@@ -7,12 +7,7 @@ async function setRole(page: Page, role: 'customer' | 'manager' | 'admin') {
   await page.getByLabel('Роль').selectOption(role);
 }
 
-/**
- * Головний сценарій (Phase 4): каталог → кастомізація → кошик → оформлення → оплата →
- * перевірка макета менеджером → друк → відправка з ТТН. Сторонні сервіси працюють як dev-заглушки бекенду.
- */
 test('customer orders custom merch and the manager ships it', async ({ page }) => {
-  // 1. Каталог → товар
   await page.goto('/catalog');
   await page.getByRole('button', { name: 'Білий' }).click();
   await expect(page).toHaveURL(/color=white/);
@@ -20,7 +15,6 @@ test('customer orders custom merch and the manager ships it', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Футболка базова' })).toBeVisible();
   await page.getByRole('link', { name: 'Створити дизайн' }).click();
 
-  // 2. Конструктор: принт на груди, зсув стрілками, збереження
   await expect(page.getByRole('tab', { name: 'Груди' })).toHaveAttribute('aria-selected', 'true');
   await page.getByLabel('Файл принта для зони «Груди»').setInputFiles(LOGO);
   const print = page.getByTestId('print-CHEST');
@@ -32,13 +26,11 @@ test('customer orders custom merch and the manager ships it', async ({ page }) =
   await expect(page.getByText('Дизайн збережено.')).toBeVisible();
   const productTotal = (await page.getByTestId('saved-total').textContent()) ?? '';
 
-  // 3. Кошик
   await page.getByRole('button', { name: 'Додати в кошик' }).click();
   await page.getByRole('link', { name: 'Перейти в кошик' }).click();
   await expect(page.getByTestId('cart-total')).toHaveText(productTotal);
   await page.getByRole('button', { name: 'Оформити замовлення' }).click();
 
-  // 4. Оформлення
   await page.getByLabel('Прізвище та імʼя').fill('Шевченко Тарас');
   await page.getByLabel('Телефон').fill('050 123 45 67');
   await page.getByLabel('Email').fill('taras@example.com');
@@ -50,12 +42,10 @@ test('customer orders custom merch and the manager ships it', async ({ page }) =
   const orderId = page.url().split('/').pop() ?? '';
   await expect(page.locator('[aria-current=step]')).toHaveText('Створено');
 
-  // 5. Оплата: заглушка LiqPay сама підтверджує платіж через 1–5 с
   await page.getByRole('button', { name: 'Оплатити через LiqPay' }).click();
   await expect(page).toHaveURL(new RegExp(`/payment-result\\?orderId=${orderId}`));
   await expect(page.getByText(/Оплату .* отримано/)).toBeVisible({ timeout: 15_000 });
 
-  // 6. Менеджер: перевірка макета → друк → відправка
   await page.goto('/manager');
   await setRole(page, 'manager');
   const card = page.getByRole('article', { name: `Замовлення ${orderId}` });
@@ -69,7 +59,6 @@ test('customer orders custom merch and the manager ships it', async ({ page }) =
     .click();
   await expect(page.getByRole('status').filter({ hasText: orderId })).toContainText('ТТН DEV-');
 
-  // 7. Покупець бачить фінальний статус і ТТН
   await setRole(page, 'customer');
   await page.goto(`/orders/${orderId}`);
   await expect(page.locator('.timeline__step--done')).toHaveCount(5);
@@ -77,7 +66,6 @@ test('customer orders custom merch and the manager ships it', async ({ page }) =
 });
 
 test('manager rejects a mockup and the order is cancelled', async ({ page, request }) => {
-  // швидке замовлення через API, щоб перевірити саме гілку відхилення
   const upload = await request.post('http://localhost:3100/customizer/uploads', {
     multipart: {
       file: {
@@ -116,7 +104,6 @@ test('manager rejects a mockup and the order is cancelled', async ({ page, reque
     },
   });
   const { id: orderId } = (await order.json()) as { id: string };
-  // рахунок на оплату: заглушка LiqPay підтвердить його сама через 1–5 с
   const invoice = await request.post(`http://localhost:3100/orders/${orderId}/checkout`);
   const { checkoutUrl } = (await invoice.json()) as { checkoutUrl: string };
 

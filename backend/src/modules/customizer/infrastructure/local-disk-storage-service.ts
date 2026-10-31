@@ -6,12 +6,10 @@ import { buildStorageKey } from './storage-keys';
 
 export interface LocalDiskStorageOptions {
   rootDir: string;
-  /** Абсолютний URL, з якого віддаються файли, напр. http://localhost:3000/files */
   publicBaseUrl: string;
   idGenerator?: () => string;
 }
 
-/** Dev-альтернатива S3: пише файли у папку (за замовчуванням .data/uploads). */
 export class LocalDiskStorageService implements IStorageService {
   private readonly rootDir: string;
   private readonly publicBaseUrl: string;

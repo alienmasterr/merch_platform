@@ -24,7 +24,6 @@ export function createOrderModule(deps: OrderModuleDeps) {
   return {
     service,
     router,
-    /** Підписати спостерігача на зміни статусу всіх замовлень (порядок підписки = порядок сповіщення). */
     attach: (observer: IOrderObserver) => service.attach(observer),
   };
 }

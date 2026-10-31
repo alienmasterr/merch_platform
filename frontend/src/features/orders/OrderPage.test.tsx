@@ -55,7 +55,6 @@ describe('OrderPage', () => {
     );
     expect(await screen.findByText('Футболка базова')).toBeInTheDocument();
     expect(screen.getByText(/2 ×/)).toBeInTheDocument();
-    // 2 × 405 + 70 доставки
     expect(screen.getByTestId('order-total')).toHaveTextContent('880');
     expect(screen.getByText(/відділення №12/)).toBeInTheDocument();
     expect(loadRecentOrders()).toEqual(['order-1']);
@@ -94,7 +93,6 @@ describe('OrderPage', () => {
     renderApp('/orders/order-1');
     await screen.findByText(/перевіряє макет/);
     orders.set(order.id, withStatus(order, 'PRINTING'));
-    // інтервал опитування на сторінці замовлення 5 с
     expect(
       await screen.findByText('Макет схвалено, виріб друкується.', {}, { timeout: 7000 }),
     ).toBeInTheDocument();

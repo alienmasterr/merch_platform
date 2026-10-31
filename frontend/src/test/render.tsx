@@ -11,10 +11,8 @@ export function createTestQueryClient(): QueryClient {
   });
 }
 
-/** Рендерить увесь застосунок (з усіма маршрутами) на заданій адресі. */
 export function renderApp(path = '/') {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
-  // applyAccept: false, щоб перевіряти власну валідацію файлів, а не фільтр accept
   const user = userEvent.setup({ applyAccept: false });
   const utils = render(
     <AppProviders queryClient={createTestQueryClient()}>

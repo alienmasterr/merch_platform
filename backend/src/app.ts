@@ -9,7 +9,6 @@ import type { AppDependencies } from './infra/config/container';
 import { cors } from './infra/http/cors';
 import { errorHandler } from './infra/http/error-handler';
 
-/** Composition root: збирає модулі й підписує спостерігачів на замовлення. */
 export function createApp(deps: AppDependencies) {
   const app: Express = express();
   app.disable('x-powered-by');
@@ -66,7 +65,6 @@ export function createApp(deps: AppDependencies) {
     ...(deps.appUrl && { orderUrl: (orderId: string) => `${deps.appUrl}/orders/${orderId}` }),
   });
 
-  // порядок важливий: спершу доставка (дописує ТТН), потім лист клієнту з цим номером
   order.attach(delivery.observer);
   order.attach(notification.observer);
 

@@ -1,6 +1,5 @@
 import type { ApparelItem, CreateApparelItemRequest } from '../../api/types';
 
-/** Стан форми створення товару: усі поля рядками/булевими, як їх тримають інпути. */
 export interface ItemForm {
   kind: ApparelItem['kind'];
   title: string;
@@ -37,7 +36,6 @@ export type ItemFormErrors = Partial<Record<keyof ItemForm, string>>;
 
 const num = (raw: string) => (raw.trim() === '' ? Number.NaN : Number(raw));
 
-/** Перевіряє форму (ті самі вимоги, що в zod-схемі бекенду) і будує тіло POST /admin/catalog. */
 export function buildCreateRequest(
   form: ItemForm,
 ): { ok: true; request: CreateApparelItemRequest } | { ok: false; errors: ItemFormErrors } {
@@ -79,7 +77,6 @@ export function buildCreateRequest(
   return { ok: true, request: { ...common, ...extra } };
 }
 
-/** Нова ціна з поля редагування або null, якщо введено не число. */
 export function parsePrice(raw: string): number | null {
   const value = num(raw.replace(',', '.'));
   return Number.isFinite(value) && value >= 0 ? Math.round(value * 100) / 100 : null;

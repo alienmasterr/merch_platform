@@ -14,11 +14,8 @@ export interface LiqPayOptions {
   publicKey: string;
   privateKey: string;
   http: FormHttpClient;
-  /** Тестовий режим: платежі не списуються, успішний статус приходить як "sandbox". */
   sandbox: boolean;
-  /** Куди LiqPay поверне клієнта після оплати (сторінка SPA). */
   resultUrl?: string;
-  /** Публічний URL нашого webhook (POST /payments/webhook). */
   serverUrl?: string;
   checkoutUrl?: string;
   apiUrl?: string;
@@ -27,7 +24,6 @@ export interface LiqPayOptions {
 const CHECKOUT_URL = 'https://www.liqpay.ua/api/3/checkout';
 const API_URL = 'https://www.liqpay.ua/api/request';
 
-/** Strategy для LiqPay API v3 (Checkout + server-server callback + refund). */
 export class LiqPayPaymentStrategy implements IPaymentStrategy {
   readonly name = 'liqpay';
   private readonly options: LiqPayOptions;
@@ -105,10 +101,8 @@ export class LiqPayPaymentStrategy implements IPaymentStrategy {
     }
   }
 
-  /** https://www.liqpay.ua/doc/api/callback: success/sandbox, failure/error, reversed, решта в процесі. */
   private mapStatus(status: string): PaymentStatus {
     if (status === 'success') return PaymentStatus.SUCCESS;
-    // "sandbox" означає успіх тестового платежу; у бойовому режимі його не приймаємо
     if (status === 'sandbox') return this.options.sandbox ? PaymentStatus.SUCCESS : PaymentStatus.FAILURE;
     if (status === 'failure' || status === 'error') return PaymentStatus.FAILURE;
     if (status === 'reversed') return PaymentStatus.REFUNDED;

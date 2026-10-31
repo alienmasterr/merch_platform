@@ -32,7 +32,6 @@ const actionToDto = (r: OrderActionResult) => ({ ...orderToDto(r.order), warning
 export function createOrderRouter(service: OrderService): Router {
   const router = Router();
 
-  // ---- клієнт ----
   router.post(
     '/orders',
     asyncHandler(async (req, res) => {
@@ -55,7 +54,6 @@ export function createOrderRouter(service: OrderService): Router {
     }),
   );
 
-  // ---- платіжний провайдер (LiqPay шле application/x-www-form-urlencoded: data, signature) ----
   router.post(
     '/payments/webhook',
     express.urlencoded({ extended: false, limit: '100kb' }),
@@ -65,7 +63,6 @@ export function createOrderRouter(service: OrderService): Router {
     }),
   );
 
-  // ---- менеджер ----
   const manager = Router();
   manager.use(requireRole('manager'));
 

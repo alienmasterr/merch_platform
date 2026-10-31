@@ -101,9 +101,7 @@ describe('findVariant', () => {
   });
 
   it('keeps the attribute the user just picked', () => {
-    // обрали розмір L при білому кольорі: білого L немає, тож беремо чорний L
     expect(findVariant(variants, { size: 'L', color: 'white' }, 'size')?.id).toBe('tee-black-l');
-    // обрали білий колір при розмірі L: білого L немає, тож беремо білий M
     expect(findVariant(variants, { size: 'L', color: 'white' }, 'color')?.id).toBe('tee-white-m');
   });
 

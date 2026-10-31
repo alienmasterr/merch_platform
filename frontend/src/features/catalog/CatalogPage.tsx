@@ -25,7 +25,6 @@ export function CatalogPage() {
     queryFn: () => listCatalog(filter),
     placeholderData: keepPreviousData,
   });
-  // повний каталог: з нього беремо варіанти розмірів і кольорів для фільтрів
   const all = useCatalog();
   const categories = useCategories();
 

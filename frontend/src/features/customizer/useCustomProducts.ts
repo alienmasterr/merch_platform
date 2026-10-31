@@ -10,7 +10,6 @@ export interface CustomProductsResult {
   isPending: boolean;
 }
 
-/** Завантажує кастомні вироби за id (кошик, замовлення). Вироби незмінні, тож кешуємо надовго. */
 export function useCustomProducts(ids: string[]): CustomProductsResult {
   return useQueries({
     queries: ids.map((id) => ({

@@ -5,7 +5,6 @@ import { loadConfig } from '../infra/config/config';
 import { buildContainer } from '../infra/config/container';
 import { withServer } from '../test-utils/with-server';
 
-/** B4.1: наскрізний сценарій модулів B на in-memory залежностях (без БД і мережі). */
 describe('Backend integration (memory)', () => {
   async function start() {
     const container = await buildContainer(loadConfig({ PERSISTENCE: 'memory', STORAGE_DRIVER: 'memory' }));
@@ -17,17 +16,14 @@ describe('Backend integration (memory)', () => {
     await withServer(app, async (url) => {
       expect(await (await fetch(`${url}/health`)).json()).toEqual({ status: 'ok' });
 
-      // 1. каталог (seed)
       const catalog = (await (await fetch(`${url}/catalog?color=white`)).json()) as { id: string }[];
       expect(catalog.map((i) => i.id)).toContain('tee-white-m');
 
-      // 2. завантаження принта
       const form = new FormData();
       form.append('file', new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }), 'logo.png');
       const upload = await fetch(`${url}/customizer/uploads`, { method: 'POST', body: form });
       const { printFileUrl } = (await upload.json()) as { printFileUrl: string };
 
-      // 3. кастомний продукт
       const created = await fetch(`${url}/customizer/products`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -42,7 +38,6 @@ describe('Backend integration (memory)', () => {
       expect(product.totalCost).toBe(350 + 50 + 100);
       expect(product.previewImageUrl).toContain('previews/');
 
-      // 4. доставка (stub без ключа Нової Пошти)
       const shipping = (await (await fetch(`${url}/delivery/shipping-cost?city=Lviv&weightKg=1`)).json()) as { cost: number };
       expect(shipping.cost).toBe(70);
     });
@@ -71,7 +66,6 @@ describe('Backend integration (memory)', () => {
 
   it('delivery observer доступний для підписки на Order (контракт зі C)', async () => {
     const { modules } = await start();
-    // інші статуси ігноруються; для неіснуючого замовлення SHIPPED кидає NotFound з order-репозиторію
     await expect(modules.delivery.observer.onOrderStatusChanged('o1', OrderStatus.PAID)).resolves.toBeUndefined();
     await expect(modules.delivery.observer.onOrderStatusChanged('o1', OrderStatus.SHIPPED)).rejects.toThrow(/not found/);
   });

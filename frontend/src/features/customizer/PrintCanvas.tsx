@@ -21,7 +21,6 @@ const KEY_STEP: Record<string, [number, number]> = {
   ArrowDown: [0, 1],
 };
 
-/** Інтерактивний мокап: зони друку, принти (перетягування мишею/пальцем або стрілками). */
 export function PrintCanvas({ baseItem, state, onSelect, onMove }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ placement: PrintPlacement; x: number; y: number } | null>(null);
@@ -30,7 +29,6 @@ export function PrintCanvas({ baseItem, state, onSelect, onMove }: Props) {
     (p) => viewOf(p) === view,
   );
 
-  /** Екранні координати → координати полотна (мм). */
   const toCanvas = (clientX: number, clientY: number) => {
     const ctm = svgRef.current?.getScreenCTM();
     if (!ctm) return null;

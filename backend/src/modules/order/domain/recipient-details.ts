@@ -1,10 +1,8 @@
 import { ValidationError, type RecipientDetails } from '@merch/contracts';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-/** Український мобільний: 0XXXXXXXXX, 380XXXXXXXXX, +38 (0XX) XXX-XX-XX тощо. */
 const UA_PHONE_DIGITS = /^(38)?0\d{9}$/;
 
-/** Перевіряє й нормалізує дані отримувача. Кидає ValidationError з першою знайденою проблемою. */
 export function createRecipientDetails(input: RecipientDetails): RecipientDetails {
   const fullName = input.fullName.trim().replace(/\s+/g, ' ');
   if (fullName.split(' ').length < 2) throw new ValidationError('Recipient full name must contain last name and first name');

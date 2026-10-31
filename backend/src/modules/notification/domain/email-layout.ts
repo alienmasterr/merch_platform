@@ -1,8 +1,3 @@
-/**
- * HTML-рамка листів. Поштові клієнти (Gmail, Outlook) ігнорують більшість <style> і сучасний CSS,
- * тому верстка табличками з інлайн-стилями, ширина до 600 px.
- */
-
 const COLORS = {
   brand: '#4f46e5',
   text: '#18181b',
@@ -14,7 +9,6 @@ const COLORS = {
 
 const FONT = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
-/** Усі дані користувача (імена, міста, назви) екрануються перед вставкою в HTML. */
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -51,7 +45,6 @@ export function button(label: string, href: string): string {
   );
 }
 
-/** Сіра плашка з підписом і значенням (адреса доставки, ТТН). */
 export function infoBox(title: string, html: string): string {
   return (
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:${COLORS.soft};border:1px solid ${COLORS.border};border-radius:8px;"><tr>` +
@@ -64,12 +57,10 @@ export function infoBox(title: string, html: string): string {
 export interface TableRow {
   label: string;
   value: string;
-  /** Підсумковий рядок: жирний, з лінією зверху. */
   total?: boolean;
   muted?: boolean;
 }
 
-/** Таблиця «назва — сума» (позиції чека, доставка, разом). Значення вже відформатовані. */
 export function amountTable(rows: TableRow[]): string {
   const cells = rows
     .map((r) => {
@@ -86,11 +77,9 @@ export function amountTable(rows: TableRow[]): string {
 }
 
 export interface LayoutOptions {
-  /** <title> і текст-анонс у списку листів поштового клієнта. */
   title: string;
   preheader: string;
   heading: string;
-  /** Уже готовий (екранований) HTML вмісту. */
   bodyHtml: string;
 }
 

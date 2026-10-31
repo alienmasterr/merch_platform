@@ -9,7 +9,6 @@ import {
 } from '@merch/contracts';
 import { isAllowedPrintFile } from './print-file-rules';
 
-/** Тариф друку, грн за см² площі принта. */
 const RATE_PER_CM2: Record<PrintTechnology, number> = {
   [PrintTechnology.DTG]: 0.25,
   [PrintTechnology.DTF]: 0.2,
@@ -48,10 +47,6 @@ export class PrintConfiguration implements IPrintConfiguration {
     this.scale = data.scale;
   }
 
-  /**
-   * Зміщення відраховуються від центру зони нанесення (мм).
-   * Принт (з урахуванням масштабу) не має виходити за межі області maxWidth x maxHeight.
-   */
   validateBounds(maxWidthMm: number, maxHeightMm: number): boolean {
     const w = this.widthMm * this.scale;
     const h = this.heightMm * this.scale;

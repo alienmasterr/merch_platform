@@ -37,7 +37,6 @@ describe('PrintConfiguration', () => {
 
   describe('calculatePrintCost', () => {
     it('рахує за площею й технологією', () => {
-      // 200x200 мм = 400 см2; DTG 0.25 грн/см2 = 100
       expect(makePrint().calculatePrintCost()).toBe(100);
       expect(makePrint({ technology: PrintTechnology.EMBROIDERY }).calculatePrintCost()).toBe(240);
     });

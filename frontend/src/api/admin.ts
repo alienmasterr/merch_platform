@@ -1,7 +1,6 @@
 import { api, unwrap } from './client';
 import type { ApparelItem, CreateApparelItemRequest } from './types';
 
-// Значення заголовка підставляє middleware із поточної ролі (див. client.ts)
 const header = { 'x-user-role': 'admin' } as const;
 
 export function createCatalogItem(body: CreateApparelItemRequest): Promise<ApparelItem> {

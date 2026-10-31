@@ -1,6 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 
-/** LiqPay: data = base64(JSON), signature = base64(sha1(private_key + data + private_key)). */
 export function encodeLiqPayData(params: Record<string, unknown>): string {
   return Buffer.from(JSON.stringify(params), 'utf8').toString('base64');
 }
@@ -15,7 +14,6 @@ export function signLiqPayData(privateKey: string, data: string): string {
   return createHash('sha1').update(privateKey + data + privateKey).digest('base64');
 }
 
-/** Порівняння за сталий час, щоб не підказувати підпис через таймінг. */
 export function isValidLiqPaySignature(privateKey: string, data: string, signature: string): boolean {
   const expected = Buffer.from(signLiqPayData(privateKey, data));
   const actual = Buffer.from(signature);

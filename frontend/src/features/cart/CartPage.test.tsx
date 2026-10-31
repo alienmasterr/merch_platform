@@ -15,7 +15,6 @@ const chestPrint = {
   scale: 1,
 };
 
-/** Кладе вироби в "бекенд" і в кошик. 100×100 мм DTG = 25 грн, футболка 350 + 30 = 405 грн. */
 function seedCart(lines: { id: string; quantity: number }[], missing: string[] = []) {
   for (const { id } of lines) {
     if (!missing.includes(id))
@@ -41,7 +40,7 @@ describe('CartPage', () => {
     renderApp('/cart');
     const lines = await screen.findByRole('list', { name: 'Позиції кошика' });
     await waitFor(() => expect(within(lines).getAllByText('Футболка базова')).toHaveLength(2));
-    expect(screen.getByTestId('cart-total')).toHaveTextContent(/1\s215/); // 405 × 3
+    expect(screen.getByTestId('cart-total')).toHaveTextContent(/1\s215/);
     expect(screen.getByRole('link', { name: /Кошик/ })).toHaveTextContent('3');
   });
 

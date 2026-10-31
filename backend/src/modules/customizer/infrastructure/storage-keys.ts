@@ -6,7 +6,6 @@ const CONTENT_TYPES: Record<string, string> = {
   svg: 'image/svg+xml',
 };
 
-/** Безпечний ключ: тільки [a-zA-Z0-9._-], без шляхів (захист від path traversal). */
 export function buildStorageKey(prefix: string, fileName: string, id: string): string {
   const safe = fileName
     .replace(/[^a-zA-Z0-9._-]+/g, '_')

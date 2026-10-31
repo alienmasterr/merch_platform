@@ -37,7 +37,7 @@ describe('useCustomizer', () => {
     const { result } = setup();
     expect(result.current.state.activePlacement).toBe('CHEST');
     expect(result.current.prints).toEqual([]);
-    expect(result.current.estimate).toBe(380); // 350 + 30 підготовки
+    expect(result.current.estimate).toBe(380);
   });
 
   it('rejects an invalid file without calling the API', async () => {
@@ -55,7 +55,7 @@ describe('useCustomizer', () => {
     await waitFor(() => expect(result.current.prints).toHaveLength(1));
     expect(result.current.state.prints.BACK).toMatchObject({
       printFileUrl: 'http://localhost:3000/files/prints/logo.png',
-      widthMm: 210, // 60% ширини зони 350 мм, пропорції 2:1
+      widthMm: 210,
       heightMm: 105,
     });
     expect(result.current.fileError).toBeNull();

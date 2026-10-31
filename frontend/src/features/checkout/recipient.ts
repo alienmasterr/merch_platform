@@ -1,9 +1,5 @@
 import type { RecipientDetails } from '../../api/types';
 
-/**
- * Ті самі правила, що на бекенді (backend/src/modules/order/domain/recipient-details.ts),
- * щоб користувач бачив помилку біля поля ще до запиту.
- */
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UA_PHONE_DIGITS = /^(38)?0\d{9}$/;
 
@@ -17,7 +13,6 @@ export const EMPTY_RECIPIENT: RecipientDetails = {
   warehouse: '',
 };
 
-/** Цифри телефону без пробілів, дужок, плюсів і дефісів. */
 export function phoneDigits(phone: string): string {
   return phone.replace(/[\s()+-]/g, '');
 }
@@ -47,7 +42,6 @@ export function isValidRecipient(r: RecipientDetails): boolean {
   return Object.keys(validateRecipient(r)).length === 0;
 }
 
-/** Обрізає пробіли перед відправкою (нормалізацію телефону робить бекенд). */
 export function cleanRecipient(r: RecipientDetails): RecipientDetails {
   return {
     fullName: r.fullName.trim().replace(/\s+/g, ' '),
@@ -58,7 +52,6 @@ export function cleanRecipient(r: RecipientDetails): RecipientDetails {
   };
 }
 
-/** Вага посилки: бекенд рахує 0,5 кг на виріб (WEIGHT_PER_ITEM_KG в order-service). */
 export const WEIGHT_PER_ITEM_KG = 0.5;
 
 export function parcelWeightKg(itemCount: number): number {
@@ -67,7 +60,6 @@ export function parcelWeightKg(itemCount: number): number {
 
 const RECIPIENT_STORAGE_KEY = 'merch.recipient.v1';
 
-/** Останні дані отримувача, щоб не вводити їх щоразу. */
 export function loadSavedRecipient(): RecipientDetails {
   try {
     const raw: unknown = JSON.parse(localStorage.getItem(RECIPIENT_STORAGE_KEY) ?? 'null');
@@ -91,6 +83,5 @@ export function saveRecipient(r: RecipientDetails): void {
   try {
     localStorage.setItem(RECIPIENT_STORAGE_KEY, JSON.stringify(r));
   } catch {
-    // не критично
   }
 }

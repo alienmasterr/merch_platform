@@ -12,19 +12,13 @@ import {
 
 const formatUah = (n: number): string => `${n.toFixed(2)} грн`;
 
-/** Назви виробів для чека за id кастомного виробу (без назви лишається id). */
 export type ItemNames = Readonly<Record<string, string>>;
 
 export interface TemplateOptions {
   itemNames?: ItemNames;
-  /** Посилання на сторінку замовлення в SPA (кнопка в листі). Без нього кнопки немає. */
   orderUrl?: string;
 }
 
-/**
- * Template Method: спільна рамка листа (привітання, підпис, HTML-верстка),
- * нащадки задають тему, текстову й HTML-частину.
- */
 export abstract class MessageTemplate {
   protected readonly order: OrderData;
   protected readonly options: TemplateOptions;

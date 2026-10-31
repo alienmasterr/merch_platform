@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { IStorageService } from '@merch/contracts';
 import { buildStorageKey } from './storage-keys';
 
-/** Для тестів і запуску без диска/S3. */
 export class InMemoryStorageService implements IStorageService {
   readonly files = new Map<string, Uint8Array>();
   private readonly idGenerator: () => string;

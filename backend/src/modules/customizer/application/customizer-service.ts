@@ -15,7 +15,6 @@ export interface CustomizerServiceDeps {
   catalogRepo: ICatalogRepository;
   productRepo: ICustomMerchRepository;
   storage: IStorageService;
-  /** Білдер зі станом, тому на кожен запит створюємо новий. */
   builderFactory: () => IMerchBuilder;
 }
 

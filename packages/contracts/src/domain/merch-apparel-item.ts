@@ -14,10 +14,6 @@ export interface MerchApparelItemProps {
   category: Category;
 }
 
-/**
- * Базовий виріб під нанесення (shared kernel: його використовують Catalog і Customizer).
- * Поліморфізм: нащадки визначають вартість підготовки до друку та дозволені зони нанесення.
- */
 export abstract class MerchApparelItem {
   abstract readonly kind: ApparelKind;
 

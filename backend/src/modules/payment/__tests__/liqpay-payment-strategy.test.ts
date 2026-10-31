@@ -30,7 +30,7 @@ describe('LiqPay signature', () => {
   it('підпис = base64(sha1(key + data + key)), перевірка відкидає змінені дані', () => {
     const data = encodeLiqPayData({ a: 1 });
     const sig = signLiqPayData(KEY, data);
-    expect(Buffer.from(sig, 'base64')).toHaveLength(20); // sha1
+    expect(Buffer.from(sig, 'base64')).toHaveLength(20);
     expect(isValidLiqPaySignature(KEY, data, sig)).toBe(true);
     expect(isValidLiqPaySignature(KEY, encodeLiqPayData({ a: 2 }), sig)).toBe(false);
     expect(isValidLiqPaySignature('other', data, sig)).toBe(false);

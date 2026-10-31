@@ -19,7 +19,6 @@ const createRequest = {
   recipient: validRecipient,
 };
 
-/** Замовлення, оплачене через webhook: статус PENDING_REVIEW. */
 async function paidOrder(ctx: ReturnType<typeof setupService>) {
   const order = await ctx.service.createOrder(createRequest);
   await ctx.service.handlePaymentWebhook({ orderId: order.id, amount: 1320 });

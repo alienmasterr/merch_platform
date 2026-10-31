@@ -3,7 +3,6 @@ import { API_BASE_URL } from './client';
 import { uploadPrint } from './customizer';
 
 describe('uploadPrint', () => {
-  // multipart через MSW у jsdom не проходить, тож перевіряємо сам запит, підмінивши fetch
   it('posts the file as multipart field "file"', async () => {
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')

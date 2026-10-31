@@ -18,7 +18,6 @@ export function OrderPage() {
 
   const pay = useMutation({
     mutationFn: () => checkoutOrder(id ?? ''),
-    // LiqPay (або dev-заглушка) повертає адресу платіжної сторінки
     onSuccess: (invoice) => browser.redirect(invoice.checkoutUrl),
   });
 

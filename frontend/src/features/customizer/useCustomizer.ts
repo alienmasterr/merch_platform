@@ -13,10 +13,6 @@ import {
 import { estimatePrintCost, type PrintGeometry } from './placement';
 import { readImageAspect, validatePrintFile } from './printFile';
 
-/**
- * Стан конструктора для обраного базового виробу: принти по зонах, завантаження файлів,
- * збереження конфігурації на бекенді (повертає прев'ю й вартість).
- */
 export function useCustomizer(baseItem: ApparelItem) {
   const firstPlacement = (baseItem.allowedPlacements[0] ?? 'CHEST') as PrintPlacement;
   const [state, dispatch] = useReducer(customizerReducer, firstPlacement, initialCustomizerState);
@@ -48,7 +44,6 @@ export function useCustomizer(baseItem: ApparelItem) {
   const estimate =
     Math.round((baseItem.basePrice + baseItem.productionCost + printsCost) * 100) / 100;
 
-  // будь-яка зміна після збереження робить збережений виріб неактуальним
   const edit =
     <T extends unknown[]>(fn: (...args: T) => void) =>
     (...args: T) => {
@@ -67,7 +62,6 @@ export function useCustomizer(baseItem: ApparelItem) {
     save,
     selectPlacement: (placement: PrintPlacement) =>
       dispatch({ type: 'selectPlacement', placement }),
-    /** Перевіряє файл на клієнті й завантажує його в активну зону. */
     addFile: (file: File) => {
       const check = validatePrintFile(file);
       setFileError(check.ok ? null : check.error);

@@ -3,7 +3,6 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import type { IStorageService } from '@merch/contracts';
 import { buildStorageKey, contentTypeFor } from './storage-keys';
 
-/** Мінімум від S3Client, що нам потрібен (легко підмінити в тестах). */
 export interface S3ClientLike {
   send(command: PutObjectCommand): Promise<unknown>;
 }
@@ -11,7 +10,6 @@ export interface S3ClientLike {
 export interface S3StorageOptions {
   client: S3ClientLike;
   bucket: string;
-  /** Базовий публічний URL сховища, напр. http://localhost:9000 (результат: {base}/{bucket}/{key}). */
   publicBaseUrl: string;
   idGenerator?: () => string;
 }

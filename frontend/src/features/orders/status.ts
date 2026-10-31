@@ -1,7 +1,6 @@
 import type { OrderStatus } from '@merch/contracts';
 import { STATUS_LABELS } from '../../shared/labels';
 
-/** Звичайний шлях замовлення (CANCELLED може статися до друку). */
 export const STATUS_FLOW: OrderStatus[] = [
   'CREATED',
   'PAID',
@@ -22,7 +21,6 @@ export function isFinalStatus(status: OrderStatus | undefined): boolean {
   return status === 'SHIPPED' || status === 'CANCELLED';
 }
 
-/** Кроки таймлайну для поточного статусу. Для скасованого всі кроки «upcoming», а скасування окремо. */
 export function buildTimeline(status: OrderStatus): TimelineStep[] {
   const index = STATUS_FLOW.indexOf(status);
   return STATUS_FLOW.map((s, i) => ({
@@ -41,7 +39,6 @@ export function buildTimeline(status: OrderStatus): TimelineStep[] {
   }));
 }
 
-/** Що бачить покупець під таймлайном. */
 export function statusHint(status: OrderStatus): string {
   switch (status) {
     case 'CREATED':
@@ -58,7 +55,6 @@ export function statusHint(status: OrderStatus): string {
   }
 }
 
-/** Інтервал опитування статусу: зупиняємось на фінальних статусах. */
 export function pollInterval(status: OrderStatus | undefined, ms = 5000): number | false {
   return isFinalStatus(status) ? false : ms;
 }

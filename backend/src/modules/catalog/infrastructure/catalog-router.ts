@@ -45,7 +45,6 @@ export function createCatalogRouter(
 ): Router {
   const router = Router();
 
-  // ---- публічні ендпоїнти ----
   router.get(
     '/catalog/categories',
     asyncHandler(async (_req, res) => {
@@ -79,7 +78,6 @@ export function createCatalogRouter(
     }),
   );
 
-  // ---- адмін-ендпоїнти ----
   const admin = Router();
   admin.use(requireRole('admin'));
 

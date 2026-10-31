@@ -21,11 +21,6 @@ export function isAdminFilterEmpty(filter: AdminFilter): boolean {
   return !filter.query.trim() && !filter.kind && !filter.categoryId && filter.stock === 'all';
 }
 
-/**
- * Категорії, доречні для типу виробу. Зв'язок тип → категорія беремо з наявних товарів
- * (у «Футболках» лише верхній одяг, в «Аксесуарах» лише аксесуари). Порожня категорія
- * ще нічим не «зайнята», тож доступна для будь-якого типу.
- */
 export function categoriesForKind(
   kind: Kind | '',
   categories: Category[],
@@ -44,7 +39,6 @@ export function categoriesForKind(
   });
 }
 
-/** Фільтр таблиці адміна: пошук за назвою/id/кольором/розміром, тип, категорія, наявність. */
 export function filterAdminItems(items: ApparelItem[], filter: AdminFilter): ApparelItem[] {
   const words = filter.query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   return items.filter((item) => {

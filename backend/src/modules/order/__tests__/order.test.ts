@@ -75,7 +75,7 @@ describe('Order', () => {
     const a = observer();
     const b = observer();
     order.attach(a);
-    order.attach(a); // повторний attach не дублює
+    order.attach(a);
     order.attach(b);
     await order.changeStatus(OrderStatus.PAID);
     expect(a.onOrderStatusChanged).toHaveBeenCalledTimes(1);

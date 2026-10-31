@@ -11,7 +11,6 @@ export function AddToCart({ product }: { product: CustomProduct }) {
   const [added, setAdded] = useState(false);
 
   const add = () => {
-    // кошик одразу має дані виробу, без повторного запиту
     queryClient.setQueryData(customProductKey(product.id), product);
     dispatch({ type: 'add', customProductId: product.id });
     setAdded(true);

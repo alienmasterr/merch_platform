@@ -15,20 +15,14 @@ import {
 
 interface Props {
   categories: Category[];
-  /** Наявні товари: з них видно, які категорії відповідають якому типу. */
   items: ApparelItem[];
   onCreated: (item: ApparelItem) => void;
   onCancel: () => void;
 }
 
-/**
- * Форма створення базового виробу (POST /admin/catalog). Поля й список категорій
- * залежать від типу: для верхнього одягу не можна обрати «Аксесуари» тощо.
- */
 export function CreateItemForm({ categories, items, onCreated, onCancel }: Props) {
   const queryClient = useQueryClient();
   const allowedFor = (kind: ItemForm['kind']) => categoriesForKind(kind, categories, items);
-  // якщо для типу лише одна категорія, одразу обираємо її
   const defaultCategory = (kind: ItemForm['kind']) => {
     const allowed = allowedFor(kind);
     return allowed.length === 1 ? (allowed[0]?.id ?? '') : '';

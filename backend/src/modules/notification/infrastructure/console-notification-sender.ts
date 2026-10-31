@@ -1,6 +1,5 @@
 import type { EmailMessage, INotificationSender } from '@merch/contracts';
 
-/** Dev-заглушка без SMTP: друкує лист у консоль. */
 export class ConsoleNotificationSender implements INotificationSender {
   private readonly log: (line: string) => void;
 

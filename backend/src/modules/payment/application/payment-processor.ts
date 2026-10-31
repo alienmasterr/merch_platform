@@ -6,7 +6,6 @@ import type {
   PaymentRequest,
 } from '@merch/contracts';
 
-/** Context для Strategy: решта системи не знає, який провайдер оплати підключений. */
 export class PaymentProcessor implements IPaymentProcessor {
   private strategy: IPaymentStrategy;
 

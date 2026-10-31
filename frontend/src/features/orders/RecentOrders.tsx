@@ -1,7 +1,6 @@
 import { Link } from 'react-router';
 import { loadRecentOrders } from './recentOrdersStore';
 
-/** Посилання на останні замовлення з цього браузера (акаунтів у системі немає). */
 export function RecentOrders() {
   const ids = loadRecentOrders();
   if (ids.length === 0) return null;

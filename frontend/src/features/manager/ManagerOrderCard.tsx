@@ -21,7 +21,6 @@ const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
 
 interface Props {
   order: Order;
-  /** Результат дії показує сторінка (картка може зникнути з вкладки після зміни статусу). */
   onResult: (result: OrderActionResult) => void;
 }
 

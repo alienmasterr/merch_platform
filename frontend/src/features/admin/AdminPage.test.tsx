@@ -18,7 +18,7 @@ describe('AdminPage', () => {
     setRole('admin');
     renderApp('/admin');
     const table = await screen.findByRole('region', { name: 'Каталог' });
-    expect(await within(table).findAllByRole('row')).toHaveLength(5); // заголовок + 4 товари
+    expect(await within(table).findAllByRole('row')).toHaveLength(5);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -82,7 +82,6 @@ describe('AdminPage', () => {
     expect(body).toBeUndefined();
 
     await user.selectOptions(within(form).getByLabelText('Тип'), 'ACCESSORY');
-    // для аксесуара одна відповідна категорія, вона обирається сама
     expect(within(form).getByLabelText('Категорія')).toHaveValue('cat-accessories');
     await user.type(within(form).getByLabelText('Назва'), 'Кепка');
     await user.type(within(form).getByLabelText('Ціна, грн'), '250');
@@ -113,7 +112,6 @@ describe('AdminPage', () => {
         .getAllByRole('option')
         .map((o) => o.textContent);
 
-    // за замовчуванням тип «Верхній одяг»: аксесуарів серед категорій немає
     expect(options()).toEqual(['—', 'Футболки', 'Худі']);
     await user.selectOptions(within(form).getByLabelText('Категорія'), 'cat-hoodies');
     await user.selectOptions(within(form).getByLabelText('Тип'), 'ACCESSORY');

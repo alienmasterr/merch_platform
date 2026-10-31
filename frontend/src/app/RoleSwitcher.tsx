@@ -8,7 +8,6 @@ const LABELS: Record<Role, string> = {
   admin: 'Адміністратор',
 };
 
-/** Dev-перемикач ролі (заголовок x-user-role), поки немає справжньої автентифікації. */
 export function RoleSwitcher() {
   const role = useRole();
   const queryClient = useQueryClient();
@@ -22,7 +21,6 @@ export function RoleSwitcher() {
         value={role}
         onChange={(e) => {
           setRole(e.target.value as Role);
-          // дані, отримані з іншою роллю (зокрема 403), більше не актуальні
           void queryClient.invalidateQueries();
         }}
       >

@@ -21,7 +21,6 @@ export interface NewOrderProps {
   createdAt: Date;
 }
 
-/** Помилки спостерігачів після зміни статусу: сам статус уже змінено, тому це 502, а не відкат. */
 export class ObserverNotificationError extends ExternalServiceError {
   readonly failures: Error[];
 
@@ -33,7 +32,6 @@ export class ObserverNotificationError extends ExternalServiceError {
 
 const toError = (e: unknown): Error => (e instanceof Error ? e : new Error(String(e)));
 
-/** Замовлення: суб'єкт Observer і кінцевий автомат статусів. */
 export class Order implements IOrderStateOperations {
   private readonly data: OrderData;
   private readonly observers: IOrderObserver[] = [];
@@ -62,7 +60,6 @@ export class Order implements IOrderStateOperations {
     });
   }
 
-  /** Відновлення зі сховища (дані вже були провалідовані під час створення). */
   static fromData(data: OrderData): Order {
     return new Order(structuredClone(data));
   }
@@ -96,7 +93,6 @@ export class Order implements IOrderStateOperations {
     this.data.paymentTransactionId = id;
   }
 
-  // ---- Observer ----
   attach(observer: IOrderObserver): void {
     if (!this.observers.includes(observer)) this.observers.push(observer);
   }
@@ -106,10 +102,6 @@ export class Order implements IOrderStateOperations {
     if (i >= 0) this.observers.splice(i, 1);
   }
 
-  /**
-   * Сповіщає спостерігачів по черзі (порядок attach важливий: доставка дописує ТТН до листа).
-   * Помилка одного не зупиняє інших; наприкінці всі помилки кидаються разом.
-   */
   async notifyObservers(): Promise<void> {
     const failures: Error[] = [];
     for (const observer of [...this.observers]) {
@@ -122,7 +114,6 @@ export class Order implements IOrderStateOperations {
     if (failures.length) throw new ObserverNotificationError(failures);
   }
 
-  // ---- стан ----
   canTransitionTo(status: OrderStatus): boolean {
     return ORDER_TRANSITIONS[this.data.status].includes(status);
   }
@@ -131,7 +122,6 @@ export class Order implements IOrderStateOperations {
     return [...ORDER_TRANSITIONS[this.data.status]];
   }
 
-  /** Лише змінює статус (без сповіщень). Сервіс спершу зберігає замовлення, потім сповіщає. */
   transitionTo(status: OrderStatus): void {
     if (!this.canTransitionTo(status)) {
       throw new ConflictError(`Order ${this.data.id} cannot move from ${this.data.status} to ${status}`);
