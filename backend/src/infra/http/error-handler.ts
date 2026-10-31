@@ -3,7 +3,6 @@ import { MulterError } from 'multer';
 import { ZodError } from 'zod';
 import { ConflictError, ExternalServiceError, NotFoundError, ValidationError } from '@merch/contracts';
 
-// Express розпізнає error-middleware за 4 аргументами, тому _next має лишитись у сигнатурі.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   if (err instanceof ZodError) {

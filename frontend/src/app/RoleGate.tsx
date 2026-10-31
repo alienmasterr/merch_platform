@@ -3,10 +3,6 @@ import { FORBIDDEN_MESSAGE } from '../api/errors';
 import type { Role } from '../api/session';
 import { useRole } from './useRole';
 
-/**
- * Сторінка лише для певної ролі. Без неї показуємо те саме повідомлення, що й на 403 від бекенду
- * (бекенд однаково перевіряє роль на кожному запиті).
- */
 export function RoleGate({
   role,
   title,

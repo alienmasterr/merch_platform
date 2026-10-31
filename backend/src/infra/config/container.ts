@@ -41,12 +41,9 @@ export interface AppDependencies {
   orderRepo: IOrderRepository;
   paymentStrategy: IPaymentStrategy;
   notificationSender: INotificationSender;
-  /** Як дістати отримувача за orderId (потрібно NovaPoshtaDeliveryObserver). */
   recipientProvider: (orderId: string) => Promise<DeliveryRecipient>;
-  /** Якщо задано, Express віддає цю папку на /files (локальне сховище). */
   localUploadsDir?: string;
   corsOrigin: string;
-  /** Публічна адреса SPA: посилання на замовлення в листах. Без неї кнопки в листах немає. */
   appUrl?: string;
 }
 
@@ -55,7 +52,6 @@ export interface Container {
   close(): Promise<void>;
 }
 
-/** Єдине місце, яке знає про конкретні реалізації. Решта коду залежить від інтерфейсів. */
 export async function buildContainer(config: AppConfig): Promise<Container> {
   let catalogRepo: ICatalogRepository;
   let productRepo: ICustomMerchRepository;

@@ -4,7 +4,6 @@ import { PLACEMENT_LABELS } from '../../shared/labels';
 import { ProductMockup } from '../customizer/ProductMockup';
 import { useCustomProducts } from '../customizer/useCustomProducts';
 
-/** Позиції замовлення з мокапами (ціни зафіксовані в момент створення замовлення). */
 export function OrderItems({ order }: { order: Order }) {
   const products = useCustomProducts(order.items.map((i) => i.customProductId));
   return (

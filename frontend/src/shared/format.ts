@@ -24,7 +24,6 @@ const COLOR_LABELS: Record<string, string> = {
   pink: 'Рожевий',
 };
 
-/** Назва кольору українською (невідомі кольори показуємо як є). */
 export function colorLabel(color: string): string {
   return COLOR_LABELS[color.toLowerCase()] ?? color;
 }
@@ -39,7 +38,6 @@ const SWATCHES: Record<string, string> = {
   navy: '#1f2a52',
 };
 
-/** CSS-колір для зразка: відомі назви мапимо, решту віддаємо браузеру як CSS-назву. */
 export function colorSwatch(color: string): string {
   return SWATCHES[color.toLowerCase()] ?? color;
 }

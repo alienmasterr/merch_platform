@@ -1,4 +1,3 @@
-/** Без акаунтів покупець знаходить свої замовлення за id, тож запам'ятовуємо їх у браузері. */
 const KEY = 'merch.orders.v1';
 const LIMIT = 10;
 
@@ -18,6 +17,5 @@ export function rememberOrder(id: string): void {
     const ids = [id, ...loadRecentOrders().filter((x) => x !== id)].slice(0, LIMIT);
     localStorage.setItem(KEY, JSON.stringify(ids));
   } catch {
-    // не критично
   }
 }

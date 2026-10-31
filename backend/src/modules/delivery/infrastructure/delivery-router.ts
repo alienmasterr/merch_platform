@@ -8,7 +8,6 @@ const query = z.object({
   weightKg: z.coerce.number().positive(),
 });
 
-/** Для чекауту у SPA: орієнтовна вартість доставки до міста. */
 export function createDeliveryRouter(deliveryService: IDeliveryService): Router {
   const router = Router();
   router.get(

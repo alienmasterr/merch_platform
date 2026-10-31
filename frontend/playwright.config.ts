@@ -1,7 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Окремі порти, щоб e2e не заважали `npm run dev`; бекенд у пам'яті (чисті дані на кожен запуск),
-// без ключів LiqPay / Нової Пошти / SMTP, тобто з dev-заглушками.
 const BACKEND_PORT = 3100;
 const FRONTEND_PORT = 5180;
 

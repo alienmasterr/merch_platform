@@ -1,7 +1,6 @@
 import { ApparelKind, Category, type ICatalogRepository } from '@merch/contracts';
 import { createApparelItem } from '../domain/apparel-item-factory';
 
-/** Стартові дані каталогу: використовуються і в in-memory режимі, і в `npm run seed` для Postgres. */
 export async function seedCatalog(repo: ICatalogRepository): Promise<void> {
   const tees = new Category('cat-tshirts', 'Футболки', 'tshirts');
   const hoodies = new Category('cat-hoodies', 'Худі', 'hoodies');

@@ -2,7 +2,6 @@ import type { PrintPlacement, PrintTechnology } from '@merch/contracts';
 import type { PrintConfigurationInput } from '../../api/types';
 import { clampToArea, fitToArea, PLACEMENT_LIMITS, type PrintGeometry } from './placement';
 
-/** Принт у конструкторі: геометрія для API + те, що треба лише інтерфейсу. */
 export interface PrintDraft extends PrintGeometry {
   placement: PrintPlacement;
   technology: PrintTechnology;
@@ -37,7 +36,6 @@ export function initialCustomizerState(placement: PrintPlacement): CustomizerSta
   return { activePlacement: placement, prints: {} };
 }
 
-/** Чистий редюсер конструктора: кожна зміна геометрії проходить через clampToArea. */
 export function customizerReducer(
   state: CustomizerState,
   action: CustomizerAction,
@@ -104,7 +102,6 @@ export function listPrints(state: CustomizerState): PrintDraft[] {
   return Object.values(state.prints);
 }
 
-/** Тіло запиту POST /customizer/products. */
 export function toPrintInputs(state: CustomizerState): PrintConfigurationInput[] {
   return listPrints(state).map((p) => ({
     printFileUrl: p.printFileUrl,

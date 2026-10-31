@@ -1,10 +1,8 @@
 import type { INotificationSender, OrderData } from '@merch/contracts';
 import { OrderReceiptMessage, OrderStatusUpdateMessage, type ItemNames } from '../domain/message-template';
 
-/** Людська назва виробу для чека (наприклад, «Футболка базова, white, M»); null, якщо не знайдено. */
 export type ItemDescriber = (customProductId: string) => Promise<string | null>;
 
-/** Адреса сторінки замовлення в SPA для кнопки в листі. */
 export type OrderUrlBuilder = (orderId: string) => string;
 
 export interface NotificationServiceOptions {
@@ -36,7 +34,6 @@ export class NotificationService {
     return this.orderUrl ? { orderUrl: this.orderUrl(order.id) } : {};
   }
 
-  /** Назви не критичні: якщо опис не вдався, у чеку лишиться id виробу, а лист однаково піде. */
   private async itemNames(order: OrderData): Promise<ItemNames> {
     const describe = this.describeItem;
     if (!describe) return {};

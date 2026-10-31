@@ -12,10 +12,6 @@ const SELECT_ORDERS = `
            '[]'::json) AS items
   FROM orders o`;
 
-/**
- * Замовлення і позиції пишуться одним запитом (CTE), тож запис атомарний.
- * Позиції після створення не змінюються, тому для них ON CONFLICT DO NOTHING.
- */
 export class PostgresOrderRepository implements IOrderRepository {
   private readonly db: Queryable;
 

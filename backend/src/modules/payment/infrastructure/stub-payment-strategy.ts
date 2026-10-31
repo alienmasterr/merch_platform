@@ -3,16 +3,10 @@ import { encodeLiqPayData, signLiqPayData } from '../domain/liqpay-signature';
 import type { FormHttpClient } from './form-http-client';
 import { LiqPayPaymentStrategy } from './liqpay-payment-strategy';
 
-/** Ключ dev-заглушки. Ним же підписується ручний webhook під час розробки. */
 export const STUB_PRIVATE_KEY = 'dev-stub-private-key';
 
-/** Скільки «платіжка» думає перед підтвердженням: випадково від 1 до 5 с, як справжній еквайринг. */
 export const randomPaymentDelayMs = (): number => 1000 + Math.floor(Math.random() * 4001);
 
-/**
- * Автопідтвердження оплати: як і LiqPay (server_url), заглушка сама шле підписаний callback
- * на webhook бекенду, тож замовлення проходить той самий шлях, що й зі справжньою платіжкою.
- */
 export interface StubAutoConfirmOptions {
   webhookUrl: string;
   http: FormHttpClient;
@@ -20,11 +14,6 @@ export interface StubAutoConfirmOptions {
   log?: (message: string) => void;
 }
 
-/**
- * Dev-заглушка, коли LIQPAY_* не задані: той самий формат і перевірка підпису, що в LiqPay,
- * але "сторінка оплати" одразу веде на resultUrl, а повернення коштів лише запамʼятовується.
- * З autoConfirm оплата підтверджується callback'ом через 1–5 с після виставлення рахунку.
- */
 export class StubPaymentStrategy implements IPaymentStrategy {
   readonly name = 'stub';
   readonly refunds: { orderId: string; amount: number }[] = [];
@@ -59,7 +48,6 @@ export class StubPaymentStrategy implements IPaymentStrategy {
     this.refunds.push({ orderId, amount });
   }
 
-  /** Підписаний callback "оплата успішна" для ручної перевірки флоу й тестів. */
   static successCallback(orderId: string, amount: number, paymentId = '1'): { data: string; signature: string } {
     const data = encodeLiqPayData({ order_id: orderId, status: 'sandbox', amount, currency: 'UAH', payment_id: paymentId });
     return { data, signature: signLiqPayData(STUB_PRIVATE_KEY, data) };
@@ -69,12 +57,10 @@ export class StubPaymentStrategy implements IPaymentStrategy {
     const { webhookUrl, http, delayMs = randomPaymentDelayMs, log = console.warn } = options;
     const timer = setTimeout(() => {
       const callback = StubPaymentStrategy.successCallback(request.orderId, request.amount, `stub-${Date.now()}`);
-      // повторний callback (наприклад, після повторного checkout) бекенд ігнорує: webhook ідемпотентний
       http.postForm(webhookUrl, callback).catch((error: unknown) => {
         log(`[payment-stub] callback for order ${request.orderId} failed: ${String(error)}`);
       });
     }, delayMs());
-    // таймер не тримає процес (тести, завершення сервера)
     timer.unref?.();
   }
 }

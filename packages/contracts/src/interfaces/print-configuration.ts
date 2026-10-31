@@ -1,7 +1,6 @@
 import type { PrintPlacement } from '../enums/print-placement';
 import type { PrintTechnology } from '../enums/print-technology';
 
-/** Чисті дані конфігурації принта (для REST і збереження в БД). */
 export interface PrintConfigurationData {
   printFileUrl: string;
   placement: PrintPlacement;

@@ -16,7 +16,6 @@ interface Props {
   onChange: (filter: AdminFilter) => void;
 }
 
-/** Фільтри таблиці каталогу в панелі адміна. Категорії обмежуються обраним типом. */
 export function AdminFilters({ filter, categories, items, onChange }: Props) {
   const allowed = categoriesForKind(filter.kind, categories, items);
   const set = (patch: Partial<AdminFilter>) => onChange({ ...filter, ...patch });

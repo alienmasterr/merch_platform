@@ -8,13 +8,9 @@ import {
 import type { HttpClient } from './http-client';
 
 export interface NovaPoshtaSenderConfig {
-  /** Назва міста відправника, напр. "Київ". */
   cityName: string;
-  /** Ref контрагента-відправника (Counterparty). */
   senderRef: string;
-  /** Ref контактної особи відправника. */
   contactSenderRef: string;
-  /** Ref адреси (відділення) відправника. */
   senderAddressRef: string;
   phone: string;
 }
@@ -24,9 +20,7 @@ export interface NovaPoshtaOptions {
   http: HttpClient;
   sender: NovaPoshtaSenderConfig;
   apiUrl?: string;
-  /** Оголошена вартість посилки, грн. */
   declaredCostUah?: number;
-  /** Вага посилки для ТТН, кг (якщо не передана ззовні). */
   defaultWeightKg?: number;
   now?: () => Date;
 }
@@ -39,11 +33,6 @@ interface NpResponse {
 
 const DEFAULT_URL = 'https://api.novaposhta.ua/v2.0/json/';
 
-/**
- * Клієнт Нової Пошти API 2.0 (JSON). HTTP-клієнт ін'єктується, тому логіка тестується без мережі.
- * УВАГА: назви полів звірені з офіційною документацією для getDocumentPrice та InternetDocument.save;
- * виклик Counterparty.save / Address.getWarehouses варто перевірити на тестовому ключі.
- */
 export class NovaPoshtaDeliveryService implements IDeliveryService {
   private readonly apiKey: string;
   private readonly http: HttpClient;
@@ -191,7 +180,6 @@ export function formatDate(date: Date): string {
   return `${dd}.${mm}.${date.getFullYear()}`;
 }
 
-/** 0501234567 / +38 (050) 123-45-67 -> 380501234567 */
 export function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   if (digits.startsWith('380')) return digits;

@@ -15,7 +15,6 @@ export function Layout() {
           <nav className="nav" aria-label="Головне меню">
             <NavLink to="/catalog">Каталог</NavLink>
             <CartLink />
-            {/* службові розділи видно лише відповідній ролі */}
             {role === 'manager' && <NavLink to="/manager">Менеджер</NavLink>}
             {role === 'admin' && <NavLink to="/admin">Адмін</NavLink>}
           </nav>

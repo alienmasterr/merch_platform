@@ -10,7 +10,6 @@ import type {
 import { estimatePrintCost } from '../features/customizer/placement';
 import { categories, catalogItems } from './fixtures';
 
-/** Повна адреса ендпоїнта для MSW-обробників. */
 export const apiUrl = (path: string): string => `${API_BASE_URL}${path}`;
 
 const notFound = (what: string) =>
@@ -19,7 +18,6 @@ const notFound = (what: string) =>
 const forbidden = (role: string) =>
   HttpResponse.json({ error: 'FORBIDDEN', message: `Role "${role}" is required` }, { status: 403 });
 
-/** Збережені в "бекенді" кастомні вироби та замовлення (скидаються між тестами). */
 export const customProducts = new Map<string, CustomProduct>();
 export const orders = new Map<string, Order>();
 
@@ -34,7 +32,6 @@ const NEXT: Record<Order['status'], Order['status'][]> = {
   CANCELLED: [],
 };
 
-/** Замовлення з тими самими полями, що повертає бекенд (orderToDto). */
 export function buildOrder(
   id: string,
   request: CreateOrderRequest,
@@ -102,7 +99,6 @@ export function buildCustomProduct(
   };
 }
 
-/** Обробники за замовчуванням. Окремі тести перевизначають їх через server.use(...). */
 export const defaultHandlers = [
   http.get(apiUrl('/catalog/categories'), () => HttpResponse.json(categories)),
   http.get(apiUrl('/catalog'), ({ request }) => {

@@ -1,6 +1,5 @@
 import { ExternalServiceError, type EmailMessage, type INotificationSender } from '@merch/contracts';
 
-/** Мінімум від транспорту nodemailer, що нам потрібен (легко підмінити в тестах). */
 export interface MailTransport {
   sendMail(mail: { from: string; to: string; subject: string; text: string; html?: string }): Promise<unknown>;
 }

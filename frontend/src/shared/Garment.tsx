@@ -13,7 +13,6 @@ const PANTS = 'M140 30 L460 30 L490 680 L330 680 L300 250 L270 680 L110 680 Z';
 const MUG_HANDLE = 'M430 270 Q520 270 520 360 Q520 450 430 450';
 const TOTE_HANDLES = 'M210 190 Q210 60 300 60 Q390 60 390 190';
 
-/** Силует виробу для вітрини й конструктора (SVG-група в координатах CANVAS). Кишеня лише спереду. */
 export function GarmentShape({
   item,
   view = 'front',
@@ -59,7 +58,6 @@ export function GarmentShape({
   );
 }
 
-/** Мініатюра виробу для карток каталогу. */
 export function GarmentThumb({ item, label }: { item: GarmentInfo; label: string }) {
   return (
     <svg

@@ -22,7 +22,6 @@ describe('PaymentResultPage', () => {
     expect(await screen.findByText(/Очікуємо підтвердження оплати/)).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
 
-    // як бекенд після callback від платіжки (заглушка шле його через 1–5 с)
     setTimeout(() => orders.set(order.id, withStatus(order, 'PENDING_REVIEW')), 1500);
     expect(
       await screen.findByText(/Оплату .* отримано/, {}, { timeout: 4000 }),

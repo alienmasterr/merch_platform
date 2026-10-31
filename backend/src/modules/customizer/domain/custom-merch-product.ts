@@ -50,7 +50,6 @@ export class CustomMerchProduct implements ICustomMerchProduct {
     return this.mockupApproved;
   }
 
-  /** Ціна виробу + підготовка до друку + вартість кожного принта. */
   getTotalCost(): number {
     const prints = this.printConfigs.reduce((sum, c) => sum + c.calculatePrintCost(), 0);
     return round2(this.baseItem.getBasePrice() + this.baseItem.calculateProductionCost() + prints);

@@ -4,13 +4,8 @@ import { formatMoney } from '../../shared/format';
 import { ErrorMessage, Loading } from '../../shared/QueryState';
 import { useOrder } from './useOrder';
 
-/** Після цього часу без підтвердження підказуємо, що робити далі. */
 const SLOW_PAYMENT_MS = 30_000;
 
-/**
- * Сюди LiqPay повертає покупця після оплати. Факт оплати підтверджує лише webhook на бекенді
- * (зазвичай за кілька секунд), тож опитуємо статус щосекунди, доки замовлення не вийде з CREATED.
- */
 export function PaymentResultPage() {
   const [params] = useSearchParams();
   const orderId = params.get('orderId') ?? undefined;
@@ -62,7 +57,6 @@ export function PaymentResultPage() {
   );
 }
 
-/** true, коли з моменту відкриття сторінки минуло `ms`. */
 function useElapsed(ms: number): boolean {
   const [elapsed, setElapsed] = useState(false);
   useEffect(() => {

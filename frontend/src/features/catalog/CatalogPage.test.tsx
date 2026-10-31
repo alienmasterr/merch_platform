@@ -5,7 +5,6 @@ import { catalogItems } from '../../test/fixtures';
 import { renderApp } from '../../test/render';
 import { apiUrl, server } from '../../test/server';
 
-/** Запам'ятовує query кожного запиту до /catalog і фільтрує фікстури за кольором. */
 function recordCatalogQueries() {
   const queries: string[] = [];
   server.use(
@@ -82,7 +81,6 @@ describe('CatalogPage', () => {
           : HttpResponse.json(catalogItems);
       }),
     );
-    // запит без фільтрів робиться двічі (результати й опції), тож другий уже успішний
     const { user } = renderApp('/catalog?size=M');
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Internal server error');

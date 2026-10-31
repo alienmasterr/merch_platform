@@ -1,7 +1,3 @@
-/**
- * Ті самі правила, що й на бекенді (backend/src/modules/customizer/domain/print-file-rules.ts):
- * растрові png/jpg/webp та векторний svg, до 20 МБ. Перевіряємо до відправки, щоб не вантажити зайве.
- */
 export const ALLOWED_PRINT_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'svg'] as const;
 export const MAX_PRINT_FILE_BYTES = 20 * 1024 * 1024;
 export const PRINT_FILE_ACCEPT =
@@ -38,10 +34,6 @@ export function validatePrintFile(file: Pick<File, 'name' | 'size' | 'type'>): P
   return { ok: true };
 }
 
-/**
- * Пропорції зображення (ширина / висота). Якщо прочитати не вдалося (або браузер
- * не відповів за `timeoutMs`), вважаємо квадратом: розмір принта користувач усе одно змінить.
- */
 export function readImageAspect(file: Blob, timeoutMs = 3000): Promise<number> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);

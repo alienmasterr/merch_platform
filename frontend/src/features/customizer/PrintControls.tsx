@@ -9,7 +9,6 @@ import type { CustomizerApi } from './useCustomizer';
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
-/** Налаштування принта в активній зоні: файл, технологія, масштаб, зміщення. */
 export function PrintControls({ customizer }: { customizer: CustomizerApi }) {
   const { state, activePrint, upload, fileError } = customizer;
   const placement: PrintPlacement = state.activePlacement;

@@ -11,8 +11,8 @@ import {
   viewOf,
 } from './placement';
 
-const chest = PLACEMENT_LIMITS.CHEST; // 300 × 400
-const sleeve = PLACEMENT_LIMITS.SLEEVE; // 100 × 100
+const chest = PLACEMENT_LIMITS.CHEST;
+const sleeve = PLACEMENT_LIMITS.SLEEVE;
 const base = { widthMm: 100, heightMm: 100, scale: 1, offsetX: 0, offsetY: 0 };
 
 describe('clampToArea', () => {
@@ -26,7 +26,6 @@ describe('clampToArea', () => {
 
   it('pulls an offset back to the area edge', () => {
     const result = clampToArea({ ...base, offsetX: 500, offsetY: -500 }, chest);
-    // половина зони мінус половина принта: 150 - 50 = 100, 200 - 50 = 150 (із запасом на похибку)
     expect(result.offsetX).toBeCloseTo(99.9, 5);
     expect(result.offsetY).toBeCloseTo(-149.9, 5);
     expect(isWithinArea(result, chest)).toBe(true);
@@ -97,7 +96,6 @@ describe('fitToArea', () => {
 
 describe('estimatePrintCost', () => {
   it('multiplies area by the technology rate', () => {
-    // 20 × 20 см = 400 см² × 0.25 = 100 грн
     expect(estimatePrintCost({ ...base, widthMm: 200, heightMm: 200 }, 'DTG')).toBe(100);
   });
 

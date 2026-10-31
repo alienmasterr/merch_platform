@@ -3,7 +3,6 @@ import type { CustomProduct } from '../../api/types';
 import { formatMoney } from '../../shared/format';
 import { PLACEMENT_LABELS, TECHNOLOGY_LABELS } from '../../shared/labels';
 
-/** Прев'ю з бекенду (SVG) і остаточна вартість збереженого виробу. */
 export function SavedProduct({
   product,
   actions,
@@ -15,12 +14,10 @@ export function SavedProduct({
     <div className="stack" aria-label="Збережений дизайн">
       <div className="alert alert--success">Дизайн збережено.</div>
       {product.previewImageUrl && (
-        // <object>, а не <img>: SVG-прев'ю посилається на файл принта, а в <img> зовнішні ресурси не вантажаться
         <object
           data={product.previewImageUrl}
           type="image/svg+xml"
           className="server-preview"
-          // бекенд малює поруч вид ззаду, якщо є принт на спині
           style={{
             aspectRatio: product.prints.some((p) => p.placement === 'BACK')
               ? '1200 / 740'

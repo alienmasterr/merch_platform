@@ -8,7 +8,6 @@ import { makeOrderData } from '../../../test-utils/order-fixtures';
 import { InMemoryOrderRepository } from '../infrastructure/in-memory-order-repository';
 import { PostgresOrderRepository } from '../infrastructure/postgres-order-repository';
 
-/** Спільний контракт для обох реалізацій IOrderRepository. */
 function contract(name: string, makeRepo: () => IOrderRepository) {
   describe(name, () => {
     it('save/findById: повний знімок, оновлення статусу й ТТН без дублювання позицій', async () => {
@@ -54,7 +53,6 @@ it('InMemoryOrderRepository повертає копії, а не внутріш�
   expect((await repo.findById(order.id))?.status).toBe(OrderStatus.CREATED);
 });
 
-/** Як і тести B на БД: лише з TEST_DATABASE_URL, у тимчасовій схемі. */
 const url = process.env.TEST_DATABASE_URL;
 
 describe.skipIf(!url)('PostgresOrderRepository (справжня БД)', () => {
@@ -67,7 +65,6 @@ describe.skipIf(!url)('PostgresOrderRepository (справжня БД)', () => {
     await admin.query(`CREATE SCHEMA ${schema}`);
     pool = new pg.Pool({ connectionString: url, options: `-c search_path=${schema}` });
     await runMigrations(pool, fileURLToPath(new URL('../../../infra/migrations/', import.meta.url)));
-    // позиції посилаються на custom_merch_products → мінімальні дані каталогу
     await pool.query(`
       INSERT INTO categories (id, name, slug) VALUES ('c', 'C', 'c');
       INSERT INTO apparel_items (id, kind, title, base_price, size, color, category_id) VALUES ('i', 'TOP', 'T', 1, 'M', 'white', 'c');
@@ -90,7 +87,6 @@ describe.skipIf(!url)('PostgresOrderRepository (справжня БД)', () => {
   });
 });
 
-// Перевірка, що fake Queryable теж підходить (unit без БД): репозиторій формує один запит на save.
 it('PostgresOrderRepository.save робить один запит', async () => {
   const calls: string[] = [];
   const db: Queryable = { query: async (text) => (calls.push(text), { rows: [] }) };

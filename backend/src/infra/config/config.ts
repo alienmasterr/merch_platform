@@ -5,14 +5,11 @@ import { REPO_ROOT } from './load-env';
 const schema = z
   .object({
     PORT: z.coerce.number().int().positive().default(3000),
-    /** memory: без БД (для швидкої розробки), postgres: реальна БД. */
     PERSISTENCE: z.enum(['memory', 'postgres']).default('memory'),
     DATABASE_URL: z.string().optional(),
 
-    /** local: файли в .data/uploads, s3: S3-сумісне сховище, memory: лише для тестів. */
     STORAGE_DRIVER: z.enum(['local', 's3', 'memory']).default('local'),
     PUBLIC_BASE_URL: z.string().default('http://localhost:3000'),
-    /** Адреса SPA для посилань у листах (сторінка замовлення). */
     APP_PUBLIC_URL: z.string().default('http://localhost:5173'),
     UPLOADS_DIR: z.string().default(join(REPO_ROOT, '.data', 'uploads')),
     CORS_ORIGIN: z.string().default('http://localhost:5173'),
@@ -31,16 +28,12 @@ const schema = z
     NP_SENDER_ADDRESS_REF: z.string().optional(),
     NP_SENDER_PHONE: z.string().optional(),
 
-    /** Без ключів LiqPay працює dev-заглушка оплати (див. README). */
     LIQPAY_PUBLIC_KEY: z.string().optional(),
     LIQPAY_PRIVATE_KEY: z.string().optional(),
     LIQPAY_SANDBOX: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
-    /** Сторінка SPA, куди повертається клієнт після оплати. */
     PAYMENT_RESULT_URL: z.string().default('http://localhost:5173/payment-result'),
-    /** Заглушка оплати сама підтверджує платіж через 1–5 с (callback на /payments/webhook). */
     STUB_PAYMENT_AUTO_CONFIRM: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
 
-    /** Без SMTP_HOST листи друкуються в консоль. */
     SMTP_HOST: z.string().optional(),
     SMTP_PORT: z.coerce.number().int().positive().default(587),
     SMTP_SECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
@@ -71,7 +64,6 @@ const schema = z
 export type AppConfig = z.infer<typeof schema>;
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): AppConfig {
-  // порожні рядки з .env (наприклад NOVA_POSHTA_API_KEY=) вважаємо незаданими
   const cleaned = Object.fromEntries(Object.entries(env).filter(([, v]) => v !== undefined && v !== ''));
   return schema.parse(cleaned);
 }

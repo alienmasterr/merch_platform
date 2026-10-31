@@ -18,7 +18,6 @@ import { ObserverNotificationError, Order } from '../domain/order';
 import { PAID_STATUSES } from '../domain/order-transitions';
 import { createRecipientDetails } from '../domain/recipient-details';
 
-/** Орієнтовна вага одного виробу для розрахунку доставки, кг. */
 export const WEIGHT_PER_ITEM_KG = 0.5;
 
 export interface OrderServiceDeps {
@@ -28,7 +27,6 @@ export interface OrderServiceDeps {
   paymentProcessor: IPaymentProcessor;
   idGenerator?: () => string;
   now?: () => Date;
-  /** Куди писати помилки спостерігачів, які не мають ламати основний флоу (webhook). */
   logError?: (message: string) => void;
 }
 
@@ -37,7 +35,6 @@ export interface CreateOrderRequest {
   recipient: RecipientDetails;
 }
 
-/** Результат дії, після якої спрацювали спостерігачі: їхні помилки повертаються як попередження. */
 export interface OrderActionResult {
   order: OrderData;
   warnings: string[];
@@ -63,7 +60,6 @@ export class OrderService {
     this.logError = deps.logError ?? ((m) => console.error(m));
   }
 
-  /** Спостерігачі підключаються в composition root і чіпляються до кожного завантаженого замовлення. */
   attach(observer: IOrderObserver): void {
     if (!this.observers.includes(observer)) this.observers.push(observer);
   }
@@ -104,7 +100,6 @@ export class OrderService {
     return (await this.load(orderId)).getRecipient();
   }
 
-  /** Виставляє рахунок. Повторний checkout неоплаченого замовлення дозволений (новий рахунок). */
   async checkout(orderId: string): Promise<PaymentInvoice> {
     const order = await this.load(orderId);
     if (order.getStatus() !== OrderStatus.CREATED) {
@@ -118,7 +113,6 @@ export class OrderService {
     });
   }
 
-  /** Webhook: перевірка підпису → при успіху handlePaymentSuccess. Інші статуси лише фіксуємо. */
   async handlePaymentWebhook(payload: Record<string, unknown>): Promise<void> {
     const notification = await this.payments.handleWebhookNotification(payload);
     if (notification.status !== PaymentStatus.SUCCESS) return;
@@ -132,10 +126,6 @@ export class OrderService {
     await this.handlePaymentSuccess(notification.orderId, notification.transactionId);
   }
 
-  /**
-   * CREATED → PAID (чек клієнту) → PENDING_REVIEW (макет іде менеджеру).
-   * Ідемпотентний: повторне повідомлення про вже оплачене замовлення нічого не змінює.
-   */
   async handlePaymentSuccess(orderId: string, transactionId: string | null): Promise<OrderActionResult> {
     const order = await this.load(orderId);
     if (order.getStatus() !== OrderStatus.CREATED) return { order: order.toData(), warnings: [] };
@@ -148,16 +138,11 @@ export class OrderService {
     return { order: (await this.load(orderId)).toData(), warnings };
   }
 
-  /**
-   * Менеджер перевіряє макет. Схвалено: друк. Відхилено: повернення коштів і скасування.
-   * Якщо повернення не вдалося, статус не змінюється, а помилка йде менеджеру.
-   */
   async verifyMockup(orderId: string, approved: boolean): Promise<OrderActionResult> {
     const order = await this.load(orderId);
     if (order.getStatus() !== OrderStatus.PENDING_REVIEW) {
       throw new ConflictError(`Order ${orderId} is ${order.getStatus()}, mockup can be verified only in PENDING_REVIEW`);
     }
-    // спершу повернення коштів: якщо воно впаде, ні статус, ні макети не зміняться
     const result = approved ? null : await this.cancel(order);
     await this.markMockups(order.toData(), approved);
     if (result) return result;
@@ -165,10 +150,6 @@ export class OrderService {
     return { order: (await this.load(orderId)).toData(), warnings };
   }
 
-  /**
-   * Ручна зміна статусу менеджером. Схвалення макета йде лише через verifyMockup,
-   * оплата лише через webhook, скасування оплаченого замовлення повертає кошти.
-   */
   async changeStatus(orderId: string, status: OrderStatus): Promise<OrderActionResult> {
     const order = await this.load(orderId);
     if (status === OrderStatus.CANCELLED) return this.cancel(order);
@@ -182,7 +163,6 @@ export class OrderService {
     return { order: (await this.load(orderId)).toData(), warnings };
   }
 
-  /** Повторно сповіщає спостерігачів про поточний статус (наприклад, ТТН не створилась через збій API). */
   async retryNotifications(orderId: string): Promise<OrderActionResult> {
     const order = await this.load(orderId);
     const warnings = await this.notify(order);
@@ -193,7 +173,6 @@ export class OrderService {
     return (await this.load(orderId)).toData().ttnNumber;
   }
 
-  /** Колбек від доставки: зберігає номер ТТН у замовленні. */
   async setTtnNumber(orderId: string, ttn: string): Promise<void> {
     const order = await this.load(orderId);
     order.setTtnNumber(ttn);
@@ -220,7 +199,6 @@ export class OrderService {
     return { order: (await this.load(order.getId())).toData(), warnings };
   }
 
-  /** Спершу зберегти, потім сповістити: спостерігачі читають і дописують уже збережене замовлення. */
   private async applyStatus(order: Order, status: OrderStatus): Promise<string[]> {
     order.transitionTo(status);
     await this.orderRepo.save(order.toData());

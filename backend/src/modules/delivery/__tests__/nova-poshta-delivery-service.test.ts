@@ -77,7 +77,7 @@ describe('NovaPoshtaDeliveryService', () => {
     const service = makeService(np);
     await service.calculateShippingCost('Львів', 1);
     await service.calculateShippingCost('Львів', 2);
-    expect(np.requests.filter((r) => r.body.calledMethod === 'getCities')).toHaveLength(2); // Київ + Львів один раз
+    expect(np.requests.filter((r) => r.body.calledMethod === 'getCities')).toHaveLength(2);
   });
 
   it('generateTTN: збирає всі refs і повертає номер накладної', async () => {

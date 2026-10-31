@@ -51,7 +51,6 @@ describe('CustomizerPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Зберегти дизайн' }));
     expect(await screen.findByText('Дизайн збережено.')).toBeInTheDocument();
-    // 350 + 30 підготовки + 18×18 см × 0.25 грн (DTG) = 461
     expect(screen.getByTestId('saved-total')).toHaveTextContent('461');
 
     await user.click(screen.getByRole('button', { name: 'Додати в кошик' }));

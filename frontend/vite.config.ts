@@ -3,13 +3,11 @@ import { defineConfig } from 'vitest/config';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
     strictPort: true,
-    // SPA ходить на /api/*, Vite проксює на бекенд без префікса: CORS у розробці не потрібен
     proxy: {
       '/api': {
         target: BACKEND_URL,

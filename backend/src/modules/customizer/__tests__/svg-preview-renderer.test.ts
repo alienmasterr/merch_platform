@@ -11,8 +11,8 @@ describe('SvgPreviewRenderer', () => {
   it('малює силует футболки в кольорі виробу і image для кожного принта', () => {
     const svg = render(makeTee(), [makePrint(), makePrint({ placement: PrintPlacement.SLEEVE, widthMm: 50, heightMm: 50 })]);
     expect(svg.startsWith('<svg')).toBe(true);
-    expect(svg).toContain('<path d="M200 40 L20 150'); // силует футболки, а не прямокутник
-    expect(svg).toContain('fill="#fafafa"'); // white
+    expect(svg).toContain('<path d="M200 40 L20 150');
+    expect(svg).toContain('fill="#fafafa"');
     expect(svg.match(/<image /g)).toHaveLength(2);
     expect(svg).toContain('data-placement="CHEST"');
     expect(svg).not.toContain('data-view="back"');
@@ -20,7 +20,6 @@ describe('SvgPreviewRenderer', () => {
 
   it('позиціонує принт: центр зони + зміщення, мінус половина розміру', () => {
     const svg = render(makeTee(), [makePrint({ offsetX: 10, offsetY: 20, widthMm: 100, heightMm: 100, scale: 2 })]);
-    // CHEST anchor (300, 300): x = 300 + 10 - 100 = 210, y = 300 + 20 - 100 = 220, w = h = 200
     expect(svg).toContain('x="210" y="220" width="200" height="200"');
   });
 
@@ -36,7 +35,6 @@ describe('SvgPreviewRenderer', () => {
 
   it('інші вироби: капюшон у худі, штани, чашка', () => {
     expect(render(makeHoodie(), [])).toContain('<path d="M215 48 Q300 -20');
-    // кишеня спереду є, ззаду немає
     const hoodie = render(makeHoodie(), [makePrint({ placement: PrintPlacement.BACK })]);
     expect(hoodie.match(/M200 520 L400 520/g)).toHaveLength(1);
     expect(render(makePants(), [])).toContain('<path d="M140 30 L460 30');

@@ -26,7 +26,6 @@ export function ProductPage() {
   const navigate = useNavigate();
   const itemQuery = useCatalogItem(id);
   const item = itemQuery.data;
-  // інші варіанти цього ж товару (той самий заголовок у тій самій категорії)
   const siblings = useCatalog(item ? { categoryId: item.category.id } : {});
   const variants = useMemo(
     () => (item ? (siblings.data ?? [item]).filter((v) => v.title === item.title) : []),

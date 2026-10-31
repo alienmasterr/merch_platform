@@ -8,7 +8,6 @@ import type { Queryable } from '../../../infra/db/queryable';
 import { CustomMerchProduct } from '../domain/custom-merch-product';
 import { PrintConfiguration } from '../domain/print-configuration';
 
-/** Параметри друку зберігаються одним JSONB-полем: запис продукту атомарний (один запит). */
 export class PostgresCustomMerchRepository implements ICustomMerchRepository {
   private readonly db: Queryable;
   private readonly catalogRepo: ICatalogRepository;

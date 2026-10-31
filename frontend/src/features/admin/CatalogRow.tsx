@@ -8,12 +8,10 @@ import { colorLabel, formatMoney } from '../../shared/format';
 import { catalogKeys } from '../catalog/useCatalog';
 import { parsePrice } from './itemForm';
 
-/** Рядок таблиці каталогу: редагування ціни й наявності (PATCH /admin/catalog/:id). */
 export function CatalogRow({ item }: { item: ApparelItem }) {
   const queryClient = useQueryClient();
   const [price, setPrice] = useState(String(item.basePrice));
   const [saved, setSaved] = useState(false);
-  // нове значення наявності показуємо одразу (синхронний стан, інакше контрольований чекбокс відкотиться)
   const [stockDraft, setStockDraft] = useState<boolean | null>(null);
 
   const update = useMutation({

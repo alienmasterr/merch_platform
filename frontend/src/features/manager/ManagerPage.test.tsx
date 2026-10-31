@@ -31,7 +31,6 @@ function seed(id: string, status: Parameters<typeof withStatus>[1]) {
   return order;
 }
 
-// мокапи в картках тягнуть вироби; у цих тестах вони не важливі
 const noProducts = http.get(apiUrl('/customizer/products/:id'), () =>
   HttpResponse.json({ error: 'NOT_FOUND', message: 'nope' }, { status: 404 }),
 );
@@ -80,7 +79,6 @@ describe('ManagerPage', () => {
       'Замовлення order-1: статус «У друці»',
     );
     expect(orders.get('order-1')?.status).toBe('PRINTING');
-    // замовлення пішло з вкладки «Перевірка макета»
     await waitFor(() =>
       expect(screen.queryByRole('article', { name: 'Замовлення order-1' })).not.toBeInTheDocument(),
     );

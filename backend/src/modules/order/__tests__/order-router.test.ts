@@ -13,7 +13,6 @@ describe('Order REST', () => {
 
   beforeEach(() => {
     payments = fakePayments();
-    // роутер передає далі лише data і signature; fake "розшифровує" їх у фіксоване повідомлення
     payments.handleWebhookNotification.mockImplementation(async () => ({
       orderId: 'o1', status: PaymentStatus.SUCCESS, amount: 570, currency: 'UAH', transactionId: 'tx',
     }));

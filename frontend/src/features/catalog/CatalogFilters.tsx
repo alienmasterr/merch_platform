@@ -18,13 +18,11 @@ function toPrice(raw: string): number | undefined {
 }
 
 export function CatalogFilters({ filter, categories, options, onChange }: Props) {
-  // ціни застосовуємо з затримкою, щоб не робити запит на кожну цифру
   const [minPrice, setMinPrice] = useState(filter.minPrice?.toString() ?? '');
   const [maxPrice, setMaxPrice] = useState(filter.maxPrice?.toString() ?? '');
   const debouncedMin = useDebouncedValue(minPrice);
   const debouncedMax = useDebouncedValue(maxPrice);
 
-  // актуальні filter/onChange для ефекту нижче, який має реагувати лише на зміну введених цін
   const latest = useRef({ filter, onChange });
   useEffect(() => {
     latest.current = { filter, onChange };

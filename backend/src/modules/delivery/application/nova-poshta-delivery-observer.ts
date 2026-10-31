@@ -7,17 +7,11 @@ import {
 
 export type RecipientProvider = (orderId: string) => Promise<DeliveryRecipient>;
 
-/** Постійне сховище ТТН (у composition root це замовлення). Без нього ТТН живе лише в памʼяті. */
 export interface TtnStore {
   get(orderId: string): Promise<string | null>;
   save(orderId: string, ttn: string): Promise<void>;
 }
 
-/**
- * Тонкий Observer: реагує на статус SHIPPED і делегує створення ТТН IDeliveryService.
- * Отримувача підтягує через RecipientProvider (у composition root це обгортка над order repository).
- * Якщо передано TtnStore, номер зберігається там і переживає перезапуск, а повторна подія не створює другу ТТН.
- */
 export class NovaPoshtaDeliveryObserver implements IOrderObserver {
   private readonly deliveryService: IDeliveryService;
   private readonly recipientProvider: RecipientProvider;
@@ -59,7 +53,6 @@ export class NovaPoshtaDeliveryObserver implements IOrderObserver {
       ttn = await this.deliveryService.generateTTN(orderId, recipient);
       this.ttnByOrder.set(orderId, ttn);
     }
-    // ТТН уже запамʼятована: якщо збереження впаде, повтор лише збереже її, а не створить нову
     await this.ttnStore?.save(orderId, ttn);
   }
 }

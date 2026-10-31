@@ -26,7 +26,6 @@ export class ConflictError extends DomainError {
   }
 }
 
-/** Помилка зовнішнього сервісу (Нова Пошта, LiqPay тощо), HTTP 502. */
 export class ExternalServiceError extends DomainError {
   constructor(message: string) {
     super(message, 'EXTERNAL_SERVICE_ERROR');

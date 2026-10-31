@@ -3,7 +3,6 @@ export interface DeliveryRecipient {
   phone: string;
   email?: string;
   city: string;
-  /** Номер відділення Нової Пошти, наприклад "12". */
   warehouse: string;
 }
 

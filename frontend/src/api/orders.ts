@@ -20,7 +20,6 @@ export function getOrder(id: string): Promise<Order> {
   return unwrap(api.GET('/orders/{id}', { params: { path: { id } } }));
 }
 
-/** Виставляє рахунок LiqPay (або dev-заглушки) для неоплаченого замовлення. */
 export function checkoutOrder(id: string): Promise<PaymentInvoice> {
   return unwrap(api.POST('/orders/{id}/checkout', { params: { path: { id } } }));
 }

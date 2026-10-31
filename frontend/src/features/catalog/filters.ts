@@ -1,6 +1,5 @@
 import type { ApparelItem, CatalogFilter, Category } from '../../api/types';
 
-/** Читає фільтр каталогу з query-параметрів URL. Некоректні числа ігноруються. */
 export function parseFilter(params: URLSearchParams): CatalogFilter {
   const filter: CatalogFilter = {};
   const text = (key: 'categoryId' | 'size' | 'color') => {
@@ -20,7 +19,6 @@ export function parseFilter(params: URLSearchParams): CatalogFilter {
   return filter;
 }
 
-/** Зворотне перетворення: лише задані значення потрапляють в URL. */
 export function filterToParams(filter: CatalogFilter): URLSearchParams {
   const params = new URLSearchParams();
   for (const key of ['categoryId', 'size', 'color'] as const) {
@@ -41,7 +39,6 @@ export function isFilterEmpty(filter: CatalogFilter): boolean {
 
 const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'ONE'];
 
-/** Сортує розміри у звичному порядку (XS < S < M …), невідомі в кінці за алфавітом. */
 export function sortSizes(sizes: Iterable<string>): string[] {
   const rank = (s: string) => {
     const i = SIZE_ORDER.indexOf(s.toUpperCase());
@@ -62,10 +59,6 @@ export function collectOptions(items: ApparelItem[]): FilterOptions {
   };
 }
 
-/**
- * Товар у вітрині: у каталозі кожен варіант (розмір × колір) окремий запис,
- * тому групуємо їх за назвою в межах категорії.
- */
 export interface ProductGroup {
   key: string;
   title: string;
@@ -76,7 +69,6 @@ export interface ProductGroup {
   colors: string[];
   variants: ApparelItem[];
   inStock: boolean;
-  /** Варіант, який відкриваємо за замовчуванням: перший у наявності. */
   primary: ApparelItem;
 }
 
@@ -103,10 +95,6 @@ export function groupVariants(items: ApparelItem[]): ProductGroup[] {
   });
 }
 
-/**
- * Варіант товару з потрібним розміром і кольором. Якщо точного збігу немає, обов'язково
- * зберігаємо атрибут, який щойно обрав користувач (`keep`), а інший підбираємо будь-який.
- */
 export function findVariant(
   variants: ApparelItem[],
   wanted: { size: string; color: string },

@@ -7,16 +7,10 @@ import {
 } from '@merch/contracts';
 import type { IPreviewRenderer } from '../domain/preview-renderer';
 
-/** Один вид (перед або спина): 600×700, 1 мм = 1 px. */
 const VIEW_WIDTH = 600;
 const VIEW_HEIGHT = 700;
 const LABEL_HEIGHT = 40;
 
-/**
- * Центри зон нанесення на полотні. Ті самі значення й силуети, що в конструкторі SPA
- * (frontend/src/features/customizer/placement.ts, frontend/src/shared/Garment.tsx),
- * тож прев'ю збігається з тим, що бачив покупець.
- */
 const ANCHORS: Record<PrintPlacement, { x: number; y: number }> = {
   [PrintPlacement.CHEST]: { x: 300, y: 300 },
   [PrintPlacement.BACK]: { x: 300, y: 330 },
@@ -34,7 +28,6 @@ const MUG_HANDLE = 'M430 270 Q520 270 520 360 Q520 450 430 450';
 const TOTE_HANDLES = 'M210 190 Q210 60 300 60 Q390 60 390 190';
 const OUTLINE = '#00000059';
 
-/** Назви кольорів із каталогу, яких немає в CSS, або яким потрібен м'якший відтінок. */
 const SWATCHES: Record<string, string> = {
   white: '#fafafa',
   black: '#1f1f23',
@@ -60,7 +53,6 @@ function safeColor(color: string): string {
   return /^[a-zA-Z0-9#(),.% -]{1,40}$/.test(color) ? color : '#cccccc';
 }
 
-/** Силует виробу в координатах одного виду. Кишеня худі видна лише спереду. */
 function garment(item: MerchApparelItem, fill: string, view: 'front' | 'back'): string {
   const shape = `fill="${fill}" stroke="${OUTLINE}" stroke-width="3" stroke-linejoin="round"`;
   if (item.kind === 'BOTTOM') return `<path d="${PANTS}" ${shape}/>`;
@@ -92,10 +84,6 @@ function printImage(p: IPrintConfiguration): string {
   );
 }
 
-/**
- * Векторний мокап без нативних залежностей: силует виробу у його кольорі + принти в зонах.
- * Якщо є принт на спині, поруч малюється вид ззаду.
- */
 export class SvgPreviewRenderer implements IPreviewRenderer {
   readonly fileExtension = 'svg';
 

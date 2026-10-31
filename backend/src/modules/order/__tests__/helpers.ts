@@ -10,7 +10,6 @@ import {
 import { OrderService } from '../application/order-service';
 import { InMemoryOrderRepository } from '../infrastructure/in-memory-order-repository';
 
-/** Fake кастомного виробу: order-модуль знає лише інтерфейс ICustomMerchProduct. */
 export function fakeProduct(id: string, totalCost: number): ICustomMerchProduct {
   let approved = false;
   return {

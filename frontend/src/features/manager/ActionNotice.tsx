@@ -12,10 +12,6 @@ interface Props {
   onDismiss: () => void;
 }
 
-/**
- * Результат дії менеджера. Живе на рівні сторінки, бо після зміни статусу замовлення
- * зникає з поточної вкладки, а попередження (ТТН, email) і «Повторити» мають лишитися видимими.
- */
 export function ActionNotice({ result, onUpdate, onDismiss }: Props) {
   const queryClient = useQueryClient();
   const retry = useMutation({

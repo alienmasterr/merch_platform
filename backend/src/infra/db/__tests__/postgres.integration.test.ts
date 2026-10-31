@@ -9,10 +9,6 @@ import { PrintConfiguration } from '../../../modules/customizer/domain/print-con
 import { PostgresCustomMerchRepository } from '../../../modules/customizer/infrastructure/postgres-custom-merch-repository';
 import { runMigrations } from '../migrate';
 
-/**
- * Запускається лише з TEST_DATABASE_URL (напр. postgres://merch:merch@localhost:5432/merch).
- * Працює у власній тимчасовій схемі й прибирає за собою.
- */
 const url = process.env.TEST_DATABASE_URL;
 
 describe.skipIf(!url)('Postgres integration', () => {
@@ -40,7 +36,7 @@ describe.skipIf(!url)('Postgres integration', () => {
   it('seed, пошук з фільтрами, оновлення наявності', async () => {
     const repo = new PostgresCatalogRepository(pool);
     await seedCatalog(repo);
-    await seedCatalog(repo); // повторний seed не дублює
+    await seedCatalog(repo);
 
     expect(await repo.findAll()).toHaveLength(6);
     const whites = await repo.findAll(new ApparelFilter({ color: 'WHITE', maxPrice: 360 }));

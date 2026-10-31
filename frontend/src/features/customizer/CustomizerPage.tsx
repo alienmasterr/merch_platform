@@ -17,7 +17,6 @@ export function CustomizerPage() {
   const baseItemId = params.get('baseItemId') ?? undefined;
   const item = useCatalogItem(baseItemId);
 
-  // конструктор відкривається зі сторінки товару; без виробу ведемо до каталогу
   if (!baseItemId) return <Navigate to="/catalog" replace />;
   if (item.isPending) return <Loading />;
   if (item.isError) {
@@ -42,7 +41,6 @@ export function CustomizerPage() {
       </div>
     );
   }
-  // key: новий виріб = новий стан конструктора
   return <Customizer key={item.data.id} baseItem={item.data} />;
 }
 

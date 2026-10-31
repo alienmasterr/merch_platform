@@ -31,8 +31,8 @@ describe('CustomMerchBuilder (Builder)', () => {
   });
 
   it('вартість: ціна + підготовка + друк', () => {
-    builder.setBaseItem(makeTee()); // 300 + 50
-    builder.addPrint(makePrint()); // + 100
+    builder.setBaseItem(makeTee());
+    builder.addPrint(makePrint());
     expect(builder.getResult().getTotalCost()).toBe(450);
   });
 

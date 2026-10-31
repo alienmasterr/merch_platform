@@ -1,6 +1,5 @@
 export const FORBIDDEN_MESSAGE = 'Недостатньо прав для цієї дії (оберіть роль у шапці).';
 
-/** Помилка API у єдиному форматі. Бекенд повертає `{ error: CODE, message, details? }`. */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -32,7 +31,6 @@ function isErrorBody(body: unknown): body is ErrorBody {
 
 export function toApiError(status: number, body: unknown): ApiError {
   if (isErrorBody(body)) return new ApiError(status, body.error, body.message, body.details);
-  // тіло не JSON: зазвичай це проксі Vite, коли бекенд не запущений
   if (status >= 500)
     return new ApiError(status, 'SERVER_UNAVAILABLE', 'Сервер недоступний, спробуйте пізніше');
   return new ApiError(status, 'HTTP_ERROR', `Запит завершився з кодом ${status}`);
@@ -43,7 +41,6 @@ interface ZodIssue {
   message?: string;
 }
 
-/** Текст помилки для користувача (з деталями валідації, якщо вони є). */
 export function describeError(error: unknown): string {
   if (!(error instanceof ApiError))
     return error instanceof Error ? error.message : 'Невідома помилка';

@@ -6,10 +6,6 @@ import { InMemoryNotificationSender } from '../modules/notification/infrastructu
 import { StubPaymentStrategy } from '../modules/payment/infrastructure/stub-payment-strategy';
 import { withServer } from '../test-utils/with-server';
 
-/**
- * Наскрізний сценарій (план, розділ 11): кастомізація → замовлення → оплата → перевірка макета → друк → відправка.
- * Усе на in-memory залежностях і заглушках (оплата, Нова Пошта), листи збираються в памʼяті.
- */
 describe('Order flow (memory)', () => {
   async function start() {
     const container = await buildContainer(loadConfig({ PERSISTENCE: 'memory', STORAGE_DRIVER: 'memory' }));
@@ -50,7 +46,6 @@ describe('Order flow (memory)', () => {
     const invoice = (await (await fetch(`${url}/orders/${order.id}/checkout`, { method: 'POST' })).json()) as { checkoutUrl: string };
     expect(invoice.checkoutUrl).toContain(`orderId=${order.id}`);
 
-    // LiqPay (тут dev-заглушка) надсилає підписаний callback
     const webhook = () =>
       fetch(`${url}/payments/webhook`, {
         method: 'POST',
@@ -58,7 +53,7 @@ describe('Order flow (memory)', () => {
         body: new URLSearchParams(StubPaymentStrategy.successCallback(order.id, order.total, '777')).toString(),
       });
     expect((await webhook()).status).toBe(200);
-    expect((await webhook()).status).toBe(200); // повторний callback не ламає стан
+    expect((await webhook()).status).toBe(200);
     return { order, product };
   }
 
@@ -91,8 +86,8 @@ describe('Order flow (memory)', () => {
 
       expect(sender.sent.map((m) => m.subject)).toEqual([
         `Чек за замовлення ${order.id}`,
-        `Замовлення ${order.id}: новий статус`, // PRINTING
-        `Замовлення ${order.id}: новий статус`, // SHIPPED
+        `Замовлення ${order.id}: новий статус`,
+        `Замовлення ${order.id}: новий статус`,
       ]);
       expect(sender.sent[2]?.text).toContain(`Номер ТТН: DEV-${order.id}`);
     });

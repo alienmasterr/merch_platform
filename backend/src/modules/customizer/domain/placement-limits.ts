@@ -5,7 +5,6 @@ export interface PlacementLimit {
   maxHeightMm: number;
 }
 
-/** Максимальна область друку для кожної зони (мм). */
 export const PLACEMENT_LIMITS: Record<PrintPlacement, PlacementLimit> = {
   [PrintPlacement.CHEST]: { maxWidthMm: 300, maxHeightMm: 400 },
   [PrintPlacement.BACK]: { maxWidthMm: 350, maxHeightMm: 450 },

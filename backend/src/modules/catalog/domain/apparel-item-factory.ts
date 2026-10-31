@@ -23,7 +23,6 @@ export type ApparelItemSpec =
   | (BaseSpec & { kind: typeof ApparelKind.BOTTOM; waistCm: number; lengthCm: number })
   | (BaseSpec & { kind: typeof ApparelKind.ACCESSORY; accessoryType: string });
 
-/** Factory: єдине місце, де вибирається конкретний нащадок MerchApparelItem (OCP: новий тип = нова гілка тут). */
 export function createApparelItem(spec: ApparelItemSpec): MerchApparelItem {
   switch (spec.kind) {
     case ApparelKind.TOP:

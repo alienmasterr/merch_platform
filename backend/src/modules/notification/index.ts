@@ -4,11 +4,8 @@ import { NotificationService, type ItemDescriber, type OrderUrlBuilder } from '.
 
 export interface NotificationModuleDeps {
   sender: INotificationSender;
-  /** Як дістати актуальне замовлення за id (у composition root це order-модуль). */
   orderProvider: OrderProvider;
-  /** Опційно: назви виробів для чека (у composition root це customizer-репозиторій). */
   describeItem?: ItemDescriber;
-  /** Опційно: посилання на сторінку замовлення в SPA (кнопка в листах). */
   orderUrl?: OrderUrlBuilder;
 }
 

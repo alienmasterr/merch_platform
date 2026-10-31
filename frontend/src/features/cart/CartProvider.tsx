@@ -2,7 +2,6 @@ import { useEffect, useMemo, useReducer, type ReactNode } from 'react';
 import { CartContext } from './cartContext';
 import { cartReducer, CART_STORAGE_KEY, loadCart, saveCart } from './cartStore';
 
-/** Кошик живе в localStorage: переживає перезавантаження й синхронізується між вкладками. */
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, dispatch] = useReducer(cartReducer, undefined, () => loadCart());
 
